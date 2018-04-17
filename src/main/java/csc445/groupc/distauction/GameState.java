@@ -1,5 +1,8 @@
 package csc445.groupc.distauction;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
@@ -21,11 +24,30 @@ public class GameState {
     private static final float MAX_BID_INCREASE = 10.00f;
     private static final float MIN_BID_INCREASE = 0.01f;
 
+    /* The amount of time that a game can run for before it times out */
+    private static final float TIMEOUT_LENGTH = 2;
+    private static final TemporalUnit TIMEOUT_UNIT = ChronoUnit.MINUTES;
+
+    /**
+     * Indicates the cause of a round ending.
+     *
+     * TIMEOUT     - The round ended due to the timeout period elapsing
+     * WINNING_BID - The round ended due to a player making a bid larger than
+     *               the win threshold.
+     */
+    public enum RoundEndType {TIMEOUT, WINNING_BID}
+
     /**
      * The current round of the game that is going on. You can tell when a new
      * round has begun, as the round number will have incremented.
      */
     private int round;
+
+    /**
+     * The time at which the current round started. This is used in determining
+     * when to timeout the game if it runs too long.
+     */
+    private LocalDateTime roundStartTime;
 
     /**
      * Stores the scores of each of the players. Maps from a player name to
@@ -46,12 +68,13 @@ public class GameState {
      */
     private final Random random;
 
-    public GameState(final long seed) {
+    public GameState(final long seed, final LocalDateTime currentTime) {
         this.round = 1;
         this.playerScores = new HashMap<>();
         this.bidHistory = new ArrayList<>();
 
         this.random = new Random(seed);
+        this.roundStartTime = currentTime;
     }
 
     public int getRound() {
@@ -89,12 +112,13 @@ public class GameState {
      * previous bid, or if the bid amount is lower than the previous bid, or if
      * the round is already over.
      *
+     * @param currentTime The current time.
      * @param bid The bid to be placed.
      * @return True if the bid succeeded, or false if it failed.
      */
-    public boolean makeBid(final Bid bid) {
+    public boolean makeBid(final LocalDateTime currentTime, final Bid bid) {
         // The bid cannot be placed if the round is already over
-        if (isRoundOver()) {
+        if (isRoundOver(currentTime)) {
             return false;
         }
 
@@ -114,14 +138,33 @@ public class GameState {
     }
 
     /**
-     * Returns True if the current round is over.
+     * Returns the cause of the current round of the game ending, if the
+     * current round has ended.
      *
-     * @return True if the round is over, or False otherwise.
+     * @param currentTime The current time.
+     * @return The cause of the round ending, or an empty optional if it has
+     * not yet ended.
      */
-    public boolean isRoundOver() {
+    public Optional<RoundEndType> getRoundEndType(final LocalDateTime currentTime) {
         final Optional<Bid> lastBid = getMostRecentBid();
 
-        return lastBid.isPresent() && lastBid.get().getBidAmount() >= ROUND_WIN_BID_AMOUNT;
+        if (roundStartTime.until(currentTime, TIMEOUT_UNIT) >= TIMEOUT_LENGTH) {
+            return Optional.of(RoundEndType.TIMEOUT);
+        } else if (lastBid.isPresent() && lastBid.get().getBidAmount() >= ROUND_WIN_BID_AMOUNT) {
+            return Optional.of(RoundEndType.WINNING_BID);
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Returns True if the current round is over.
+     *
+     * @param currentTime The current time.
+     * @return True if the round is over, or False otherwise.
+     */
+    public boolean isRoundOver(final LocalDateTime currentTime) {
+        return getRoundEndType(currentTime).isPresent();
     }
 
     /**
@@ -134,5 +177,25 @@ public class GameState {
         final float increase = random.nextFloat() * (MAX_BID_INCREASE - MIN_BID_INCREASE) + MIN_BID_INCREASE;
 
         return prevAmount + increase;
+    }
+
+    public boolean tryStartNewRound(final LocalDateTime currentTime) {
+        // A new round cannot be started if the current round is still running
+        if (!isRoundOver(currentTime)) {
+            return false;
+        }
+
+        ++round;
+
+        updatePlayerScores();
+        bidHistory.clear();
+
+        roundStartTime = LocalDateTime.now();
+
+        return true;
+    }
+
+    private void updatePlayerScores() {
+
     }
 }
