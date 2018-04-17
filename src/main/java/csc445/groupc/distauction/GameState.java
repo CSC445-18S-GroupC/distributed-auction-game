@@ -68,6 +68,12 @@ public class GameState {
      */
     private final Random random;
 
+    /**
+     * Creates a new game object.
+     *
+     * @param seed A seed for the random number generator.
+     * @param currentTime The current time.
+     */
     public GameState(final long seed, final LocalDateTime currentTime) {
         this.round = 1;
         this.playerScores = new HashMap<>();
@@ -179,6 +185,14 @@ public class GameState {
         return prevAmount + increase;
     }
 
+    /**
+     * Attempts to start a new round of the game.
+     *
+     * Fails if the current round is not yet over.
+     *
+     * @param currentTime The current time.
+     * @return True if the new round was successfully started, or False otherwise.
+     */
     public boolean tryStartNewRound(final LocalDateTime currentTime) {
         // A new round cannot be started if the current round is still running
         if (!isRoundOver(currentTime)) {
@@ -187,15 +201,15 @@ public class GameState {
 
         ++round;
 
-        updatePlayerScores();
+        updatePlayerScores(getRoundEndType(currentTime).get());
         bidHistory.clear();
 
-        roundStartTime = LocalDateTime.now();
+        roundStartTime = currentTime;
 
         return true;
     }
 
-    private void updatePlayerScores() {
+    private void updatePlayerScores(final RoundEndType roundEndType) {
 
     }
 }
