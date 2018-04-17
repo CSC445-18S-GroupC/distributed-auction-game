@@ -3,6 +3,7 @@ package csc445.groupc.distauction;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.Random;
 
 /**
  * Represents the current state of the game. It mutates as the game progresses.
@@ -15,6 +16,10 @@ public class GameState {
      * game ends.
      */
     private static final float ROUND_WIN_BID_AMOUNT = 100f;
+
+    /* The maximum and minimum possible increases in the amount placed in new bids */
+    private static final float MAX_BID_INCREASE = 10.00f;
+    private static final float MIN_BID_INCREASE = 0.01f;
 
     /**
      * The current round of the game that is going on. You can tell when a new
@@ -34,12 +39,19 @@ public class GameState {
      * A list of all of the bids that have been made in the current round of
      * the game. The last item in the list is the most recent bid.
      */
-    private ArrayList<Bid> bidHistory;
+    private final ArrayList<Bid> bidHistory;
 
-    public GameState() {
+    /**
+     * A random number generator used for generating the new bid amounts.
+     */
+    private final Random random;
+
+    public GameState(final long seed) {
         this.round = 1;
         this.playerScores = new HashMap<>();
         this.bidHistory = new ArrayList<>();
+
+        this.random = new Random(seed);
     }
 
     public int getRound() {
@@ -110,5 +122,17 @@ public class GameState {
         final Optional<Bid> lastBid = getMostRecentBid();
 
         return lastBid.isPresent() && lastBid.get().getBidAmount() >= ROUND_WIN_BID_AMOUNT;
+    }
+
+    /**
+     * Returns a random bid amount to use in the player's next bid.
+     *
+     * @return A random bid amount.
+     */
+    public float getNewBidAmount() {
+        final float prevAmount = getMostRecentBid().map(Bid::getBidAmount).orElse(0f);
+        final float increase = random.nextFloat() * (MAX_BID_INCREASE - MIN_BID_INCREASE) + MIN_BID_INCREASE;
+
+        return prevAmount + increase;
     }
 }
