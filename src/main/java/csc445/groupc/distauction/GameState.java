@@ -11,6 +11,12 @@ import java.util.Optional;
  */
 public class GameState {
     /**
+     * The amount of money that once a bid exceeds, the current round of the
+     * game ends.
+     */
+    private static final float ROUND_WIN_BID_AMOUNT = 100f;
+
+    /**
      * The current round of the game that is going on. You can tell when a new
      * round has begun, as the round number will have incremented.
      */
@@ -65,20 +71,44 @@ public class GameState {
     }
 
     /**
-     * Appends the given Bid to the bid history. Fails if the player placing
-     * the bid was also the player who placed the previous bid.
+     * Appends the given Bid to the bid history.
+     *
+     * Fails if the player placing the bid was also the player who placed the
+     * previous bid, or if the bid amount is lower than the previous bid, or if
+     * the round is already over.
      *
      * @param bid The bid to be placed.
      * @return True if the bid succeeded, or false if it failed.
      */
     public boolean makeBid(final Bid bid) {
+        // The bid cannot be placed if the round is already over
+        if (isRoundOver()) {
+            return false;
+        }
+
         final Optional<String> lastBidder = getMostRecentBid().map(Bid::getBidder);
+        final Optional<Float> prevAmount = getMostRecentBid().map(Bid::getBidAmount);
+
         if (lastBidder.isPresent() && lastBidder.get().equals(bid.getBidder())) {
             // Bid fails if the bidder was also the bidder who placed the previous bid
+            return false;
+        } else if (prevAmount.isPresent() && prevAmount.get() >= bid.getBidAmount()) {
+            // Bid fails if the new bid amount is less than or equal to the previous bid's amount
             return false;
         } else {
             bidHistory.add(bid);
             return true;
         }
+    }
+
+    /**
+     * Returns True if the current round is over.
+     *
+     * @return True if the round is over, or False otherwise.
+     */
+    public boolean isRoundOver() {
+        final Optional<Bid> lastBid = getMostRecentBid();
+
+        return lastBid.isPresent() && lastBid.get().getBidAmount() >= ROUND_WIN_BID_AMOUNT;
     }
 }

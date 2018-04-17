@@ -96,4 +96,63 @@ public class GameStateTest {
         assertEquals(1, gs.getBidHistory().size());
         assertEquals(bidA, gs.getBidHistory().get(0));
     }
+
+    @Test
+    public void makeBidLower() {
+        final GameState gs = new GameState();
+
+        final Bid bidA = new Bid("Alice", 5.52f);
+        final Bid bidB = new Bid("Bob", 1.20f);
+
+        assertEquals(0, gs.getBidHistory().size());
+
+        assertTrue(gs.makeBid(bidA));
+
+        assertEquals(1, gs.getBidHistory().size());
+        assertEquals(bidA, gs.getBidHistory().get(0));
+
+        assertFalse(gs.makeBid(bidB));
+
+        assertEquals(1, gs.getBidHistory().size());
+        assertEquals(bidA, gs.getBidHistory().get(0));
+    }
+
+    @Test
+    public void makeBidRoundOver() {
+        final GameState gs = new GameState();
+
+        final Bid bidA = new Bid("Alice", 105.52f);
+        final Bid bidB = new Bid("Bob", 110.20f);
+
+        assertEquals(0, gs.getBidHistory().size());
+
+        assertTrue(gs.makeBid(bidA));
+
+        assertEquals(1, gs.getBidHistory().size());
+        assertEquals(bidA, gs.getBidHistory().get(0));
+
+        assertFalse(gs.makeBid(bidB));
+
+        assertEquals(1, gs.getBidHistory().size());
+        assertEquals(bidA, gs.getBidHistory().get(0));
+    }
+
+    @Test
+    public void isRoundOverStart() {
+        final GameState gs = new GameState();
+
+        assertFalse(gs.isRoundOver());
+    }
+
+    @Test
+    public void isRoundOverEnd() {
+        final GameState gs = new GameState();
+
+        assertFalse(gs.isRoundOver());
+
+        final Bid bidA = new Bid("Alice", 105.52f);
+        assertTrue(gs.makeBid(bidA));
+
+        assertTrue(gs.isRoundOver());
+    }
 }
