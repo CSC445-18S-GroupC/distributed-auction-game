@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * Created by chris on 4/17/18.
@@ -43,4 +43,57 @@ public class GameStateTest {
         assertEquals(Optional.empty(), gs.getMostRecentBid());
     }
 
+    @Test
+    public void getMostRecentBidTwo() {
+        final GameState gs = new GameState();
+
+        final Bid bidA = new Bid("Alice", 5.52f);
+        final Bid bidB = new Bid("Bob", 12.01f);
+
+        gs.makeBid(bidA);
+        gs.makeBid(bidB);
+
+        assertEquals(Optional.of(bidB), gs.getMostRecentBid());
+    }
+
+    @Test
+    public void makeBidSuccessful() {
+        final GameState gs = new GameState();
+
+        final Bid bidA = new Bid("Alice", 5.52f);
+        final Bid bidB = new Bid("Bob", 12.01f);
+
+        assertEquals(0, gs.getBidHistory().size());
+
+        assertTrue(gs.makeBid(bidA));
+
+        assertEquals(1, gs.getBidHistory().size());
+        assertEquals(bidA, gs.getBidHistory().get(0));
+
+        assertTrue(gs.makeBid(bidB));
+
+        assertEquals(2, gs.getBidHistory().size());
+        assertEquals(bidA, gs.getBidHistory().get(0));
+        assertEquals(bidB, gs.getBidHistory().get(1));
+    }
+
+    @Test
+    public void makeBidRepeat() {
+        final GameState gs = new GameState();
+
+        final Bid bidA = new Bid("Alice", 5.52f);
+        final Bid bidB = new Bid("Alice", 12.01f);
+
+        assertEquals(0, gs.getBidHistory().size());
+
+        assertTrue(gs.makeBid(bidA));
+
+        assertEquals(1, gs.getBidHistory().size());
+        assertEquals(bidA, gs.getBidHistory().get(0));
+
+        assertFalse(gs.makeBid(bidB));
+
+        assertEquals(1, gs.getBidHistory().size());
+        assertEquals(bidA, gs.getBidHistory().get(0));
+    }
 }

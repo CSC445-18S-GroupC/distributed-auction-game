@@ -63,4 +63,22 @@ public class GameState {
             return Optional.of(bidHistory.get(numBids - 1));
         }
     }
+
+    /**
+     * Appends the given Bid to the bid history. Fails if the player placing
+     * the bid was also the player who placed the previous bid.
+     *
+     * @param bid The bid to be placed.
+     * @return True if the bid succeeded, or false if it failed.
+     */
+    public boolean makeBid(final Bid bid) {
+        final Optional<String> lastBidder = getMostRecentBid().map(Bid::getBidder);
+        if (lastBidder.isPresent() && lastBidder.get().equals(bid.getBidder())) {
+            // Bid fails if the bidder was also the bidder who placed the previous bid
+            return false;
+        } else {
+            bidHistory.add(bid);
+            return true;
+        }
+    }
 }
