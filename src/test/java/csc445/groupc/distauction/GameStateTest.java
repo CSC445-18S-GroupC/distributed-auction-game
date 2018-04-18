@@ -16,19 +16,19 @@ import static org.junit.Assert.*;
 public class GameStateTest {
     @Test
     public void getPlayerScores() {
-        final GameState gs = new GameState(42, LocalDateTime.now());
+        final GameState gs = new GameState(42, LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"});
 
         final HashMap<String, Integer> scores = gs.getPlayerScores();
 
         scores.put("abc", 123);
 
-        assertEquals(1, scores.size());
-        assertEquals(0, gs.getPlayerScores().size());
+        assertEquals(4, scores.size());
+        assertEquals(3, gs.getPlayerScores().size());
     }
 
     @Test
     public void getBidHistory() {
-        final GameState gs = new GameState(42, LocalDateTime.now());
+        final GameState gs = new GameState(42, LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"});
 
         final ArrayList<Bid> bidHistory = gs.getBidHistory();
 
@@ -40,14 +40,14 @@ public class GameStateTest {
 
     @Test
     public void getMostRecentBidEmpty() {
-        final GameState gs = new GameState(42, LocalDateTime.now());
+        final GameState gs = new GameState(42, LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"});
 
         assertEquals(Optional.empty(), gs.getMostRecentBid());
     }
 
     @Test
     public void getMostRecentBidTwo() {
-        final GameState gs = new GameState(42, LocalDateTime.now());
+        final GameState gs = new GameState(42, LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"});
 
         final Bid bidA = new Bid("Alice", 5.52f);
         final Bid bidB = new Bid("Bob", 12.01f);
@@ -60,7 +60,7 @@ public class GameStateTest {
 
     @Test
     public void makeBidSuccessful() {
-        final GameState gs = new GameState(42, LocalDateTime.now());
+        final GameState gs = new GameState(42, LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"});
 
         final Bid bidA = new Bid("Alice", 5.52f);
         final Bid bidB = new Bid("Bob", 12.01f);
@@ -81,7 +81,7 @@ public class GameStateTest {
 
     @Test
     public void makeBidRepeat() {
-        final GameState gs = new GameState(42, LocalDateTime.now());
+        final GameState gs = new GameState(42, LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"});
 
         final Bid bidA = new Bid("Alice", 5.52f);
         final Bid bidB = new Bid("Alice", 12.01f);
@@ -101,7 +101,7 @@ public class GameStateTest {
 
     @Test
     public void makeBidLower() {
-        final GameState gs = new GameState(42, LocalDateTime.now());
+        final GameState gs = new GameState(42, LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"});
 
         final Bid bidA = new Bid("Alice", 5.52f);
         final Bid bidB = new Bid("Bob", 1.20f);
@@ -121,7 +121,7 @@ public class GameStateTest {
 
     @Test
     public void makeBidRoundOver() {
-        final GameState gs = new GameState(42, LocalDateTime.now());
+        final GameState gs = new GameState(42, LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"});
 
         final Bid bidA = new Bid("Alice", 105.52f);
         final Bid bidB = new Bid("Bob", 110.20f);
@@ -141,14 +141,14 @@ public class GameStateTest {
 
     @Test
     public void isRoundOverStart() {
-        final GameState gs = new GameState(42, LocalDateTime.now());
+        final GameState gs = new GameState(42, LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"});
 
         assertFalse(gs.isRoundOver(LocalDateTime.now()));
     }
 
     @Test
     public void isRoundOverWinning() {
-        final GameState gs = new GameState(42, LocalDateTime.now());
+        final GameState gs = new GameState(42, LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"});
 
         assertFalse(gs.isRoundOver(LocalDateTime.now()));
 
@@ -163,7 +163,7 @@ public class GameStateTest {
 
     @Test
     public void isRoundOverTimeout() {
-        final GameState gs = new GameState(42, LocalDateTime.now());
+        final GameState gs = new GameState(42, LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"});
 
         assertFalse(gs.isRoundOver(LocalDateTime.now()));
 
@@ -174,7 +174,7 @@ public class GameStateTest {
 
     @Test
     public void getNewBidAmount() {
-        final GameState gs = new GameState(42, LocalDateTime.now());
+        final GameState gs = new GameState(42, LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"});
 
         for (int i = 0; i < 100; i++) {
             final float amount = gs.getNewBidAmount();
@@ -193,5 +193,68 @@ public class GameStateTest {
             assertTrue(amount >= 0.01f + aliceAmount);
             assertTrue(amount <= 10.00f + aliceAmount);
         }
+    }
+
+    @Test
+    public void startNewRoundStillRunning() {
+        final GameState gs = new GameState(42, LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"});
+
+        assertEquals(1, gs.getRound());
+        assertFalse(gs.startNewRound(LocalDateTime.now()));
+        assertEquals(1, gs.getRound());
+    }
+
+    @Test
+    public void startNewRoundWinningBid() {
+        final GameState gs = new GameState(42, LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"});
+
+        assertEquals(1, gs.getRound());
+
+        final Bid bidA = new Bid("Alice", 105.52f);
+        assertTrue(gs.makeBid(LocalDateTime.now(), bidA));
+
+        assertTrue(gs.startNewRound(LocalDateTime.now()));
+        assertEquals(2, gs.getRound());
+
+        final HashMap<String, Integer> scores = gs.getPlayerScores();
+
+        assertEquals(100, (int) scores.get("Alice"));
+        assertEquals(-35, (int) scores.get("Bob"));
+        assertEquals(-35, (int) scores.get("Jane"));
+    }
+
+    @Test
+    public void startNewRoundTimeoutWithBid() {
+        final GameState gs = new GameState(42, LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"});
+
+        assertEquals(1, gs.getRound());
+
+        final Bid bidA = new Bid("Alice", 1.52f);
+        assertTrue(gs.makeBid(LocalDateTime.now(), bidA));
+
+        assertTrue(gs.startNewRound(LocalDateTime.now().plus(5, ChronoUnit.MINUTES)));
+        assertEquals(2, gs.getRound());
+
+        final HashMap<String, Integer> scores = gs.getPlayerScores();
+
+        assertEquals(-20, (int) scores.get("Alice"));
+        assertEquals(-50, (int) scores.get("Bob"));
+        assertEquals(-50, (int) scores.get("Jane"));
+    }
+
+    @Test
+    public void startNewRoundTimeoutNoBids() {
+        final GameState gs = new GameState(42, LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"});
+
+        assertEquals(1, gs.getRound());
+
+        assertTrue(gs.startNewRound(LocalDateTime.now().plus(5, ChronoUnit.MINUTES)));
+        assertEquals(2, gs.getRound());
+
+        final HashMap<String, Integer> scores = gs.getPlayerScores();
+
+        assertEquals(-50, (int) scores.get("Alice"));
+        assertEquals(-50, (int) scores.get("Bob"));
+        assertEquals(-50, (int) scores.get("Jane"));
     }
 }

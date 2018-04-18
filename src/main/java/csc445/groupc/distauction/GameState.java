@@ -11,6 +11,10 @@ import java.util.Random;
 /**
  * Represents the current state of the game. It mutates as the game progresses.
  *
+ * All references to the current time are taken in as parameters in order to
+ * separate out the getting of the current time in order to make the code
+ * easier to test.
+ *
  * Created by chris on 4/17/18.
  */
 public class GameState {
@@ -27,6 +31,15 @@ public class GameState {
     /* The amount of time that a game can run for before it times out */
     private static final float TIMEOUT_LENGTH = 2;
     private static final TemporalUnit TIMEOUT_UNIT = ChronoUnit.MINUTES;
+
+    /* Player score change amounts associated with the different game end types */
+    private static final int WINNING_BID_LEADER_SCORE_CHANGE = 100;
+    private static final int WINNING_BID_LOSER_SCORE_CHANGE = -35;
+
+    private static final int TIMEOUT_LEADER_SCORE_CHANGE = -20;
+    private static final int TIMEOUT_LOSER_SCORE_CHANGE = -50;
+
+    private static final int STARTING_SCORE = 0;
 
     /**
      * Indicates the cause of a round ending.
@@ -73,14 +86,19 @@ public class GameState {
      *
      * @param seed A seed for the random number generator.
      * @param currentTime The current time.
+     * @param players The usernames of the players.
      */
-    public GameState(final long seed, final LocalDateTime currentTime) {
+    public GameState(final long seed, final LocalDateTime currentTime, final String[] players) {
         this.round = 1;
         this.playerScores = new HashMap<>();
         this.bidHistory = new ArrayList<>();
 
         this.random = new Random(seed);
         this.roundStartTime = currentTime;
+
+        for (final String p : players) {
+            this.playerScores.put(p, STARTING_SCORE);
+        }
     }
 
     public int getRound() {
@@ -193,7 +211,7 @@ public class GameState {
      * @param currentTime The current time.
      * @return True if the new round was successfully started, or False otherwise.
      */
-    public boolean tryStartNewRound(final LocalDateTime currentTime) {
+    public boolean startNewRound(final LocalDateTime currentTime) {
         // A new round cannot be started if the current round is still running
         if (!isRoundOver(currentTime)) {
             return false;
@@ -209,7 +227,29 @@ public class GameState {
         return true;
     }
 
+    /**
+     * Updates the scores of the players based on how the current round of the
+     * game ended.
+     *
+     * @param roundEndType The cause of the current round ending.
+     */
     private void updatePlayerScores(final RoundEndType roundEndType) {
+        final int leaderChange;
+        final int loserChange;
+        if (roundEndType == RoundEndType.WINNING_BID) {
+            leaderChange = WINNING_BID_LEADER_SCORE_CHANGE;
+            loserChange = WINNING_BID_LOSER_SCORE_CHANGE;
+        } else {
+            leaderChange = TIMEOUT_LEADER_SCORE_CHANGE;
+            loserChange = TIMEOUT_LOSER_SCORE_CHANGE;
+        }
 
+        final Optional<String> leadingPlayer = getMostRecentBid().map(Bid::getBidder);
+
+        leadingPlayer.map(p -> playerScores.put(p, playerScores.get(p) + leaderChange));
+
+        playerScores.keySet().stream()
+                .filter(p -> !(leadingPlayer.isPresent() && p.equals(leadingPlayer.get())))
+                .forEach(p -> playerScores.put(p, playerScores.get(p) + loserChange));
     }
 }
