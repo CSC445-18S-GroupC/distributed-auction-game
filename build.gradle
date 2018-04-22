@@ -13,3 +13,8 @@ repositories {
 dependencies {
     testCompile "junit:junit:4.11"
 }
+
+// Let reading from System.in work while using `gradle run`
+run {
+    standardInput = System.in
+}
