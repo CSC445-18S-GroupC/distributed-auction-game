@@ -29,12 +29,9 @@ public abstract class MessageReceiving {
     public static void run(final String group, final int port, final LinkedBlockingQueue<Integer> queue) throws IOException, InterruptedException {
         final InetAddress groupAddress = InetAddress.getByName(group);
 
-        System.out.println("Trying to get receive port");
         final MulticastSocket socket = new MulticastSocket(port);
         try {
-            System.out.println("Got receive port");
             socket.joinGroup(groupAddress);
-            System.out.println("Receive joined successfully");
 
             while (true) {
                 handlePacket(socket, queue);

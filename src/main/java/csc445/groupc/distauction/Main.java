@@ -8,7 +8,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class Main {
     public static void main(String[] args) throws InterruptedException {
-        final String group = "203.0.113.0";
+        final String group = "230.1.1.1";
         final int sendPort = 5323;
         final int receivePort = 5921;
 
@@ -16,8 +16,7 @@ public class Main {
         final LinkedBlockingQueue<Integer> receiveQueue = new LinkedBlockingQueue<>();
 
         onThread(() -> {
-            try {
-                MessageReceiving.run(group, receivePort, receiveQueue);} catch (Exception e) {}
+            try {MessageReceiving.run(group, receivePort, receiveQueue);} catch (Exception e) {}
         });
         onThread(() -> {
             try {MessageSending.run(group, sendPort, receivePort, sendQueue);} catch (Exception e) {}
@@ -25,13 +24,15 @@ public class Main {
 
         final Scanner kb = new Scanner(System.in);
         while (true) {
-            final int message = kb.nextInt();
-            System.out.println("Sent:     " + message);
+            System.out.print("> ");
+
+            final int message = kb.nextByte();
+            System.out.println("Queued:   " + message);
 
             sendQueue.put(message);
 
             final int receivedMessage = receiveQueue.take();
-            System.out.println("Received: " + receivedMessage);
+            System.out.println("Pulled:   " + receivedMessage);
         }
     }
 

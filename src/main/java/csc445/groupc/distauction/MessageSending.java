@@ -24,12 +24,9 @@ public abstract class MessageSending {
     public static void run(final String sendGroup, final int sendPort, final int receivePort, final LinkedBlockingQueue<Integer> queue) throws IOException, InterruptedException {
         final InetAddress sendGroupAddress = InetAddress.getByName(sendGroup);
 
-        System.out.println("Trying to get send port");
         final MulticastSocket socket = new MulticastSocket(sendPort);
         try {
-            System.out.println("Got send port");
             socket.joinGroup(sendGroupAddress);
-            System.out.println("Send joined successfully");
 
             while (true) {
                 // TODO: Change to use real Messages
