@@ -1,10 +1,20 @@
 plugins {
     id 'java'
     id 'application'
+    id 'jacoco'
 }
 
 mainClassName = "csc445.groupc.distauction.Main"
 
 repositories {
     mavenCentral()
+}
+
+dependencies {
+    testCompile "junit:junit:4.11"
+}
+
+// Let reading from System.in work while using `gradle run`
+run {
+    standardInput = System.in
 }
