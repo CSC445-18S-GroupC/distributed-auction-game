@@ -19,6 +19,11 @@ public class Acceptor {
     private final LinkedBlockingQueue<Integer> sendQueue;
 
     /**
+     * The proposal id of the largest proposal that the Acceptor has promised.
+     */
+    private int promisedProposalId;
+
+    /**
      * A value indicating if the Acceptor should continue running. It is set to true when run() is called, and then is
      * set to be false when shutdown() is called, in order to stop the run() loop.
      */
@@ -29,6 +34,8 @@ public class Acceptor {
         this.sendQueue = sendQueue;
 
         this.running = new AtomicBoolean(false);
+
+        this.promisedProposalId = -1;
     }
 
     public void run() throws InterruptedException {
@@ -42,17 +49,19 @@ public class Acceptor {
             if (message.equals(PREPARE)) {
                 final int proposalId = 5;
 
-                if (!proposalIsObolete(proposalId)) {
+                if (!proposalIsObsolete(proposalId)) {
                     if (alreadyHaveAProposal()) {
                         sendPromiseWithPreviousValue(proposalId);
                     } else {
                         sendRegularPromise(proposalId);
                     }
+
+                    promisedProposalId = proposalId;
                 }
             } else if (message.equals(ACCEPT_REQUEST)) {
                 final int proposalId = 5;
 
-                if (!proposalIsObolete(proposalId)) {
+                if (!proposalIsObsolete(proposalId)) {
                     sendAcceptToProposer(proposalId);
                     sendAcceptToAllLearners(proposalId);
                 }
@@ -64,9 +73,8 @@ public class Acceptor {
         running.set(false);
     }
 
-    private boolean proposalIsObolete(final int proposalId) {
-        // TODO: Implement
-        return false;
+    private boolean proposalIsObsolete(final int proposalId) {
+        return proposalId < promisedProposalId;
     }
 
     private boolean alreadyHaveAProposal() {

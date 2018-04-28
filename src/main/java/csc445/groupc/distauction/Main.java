@@ -21,6 +21,7 @@ public class Main {
         final LinkedBlockingQueue<Integer> receiveQueueLearner = new LinkedBlockingQueue<>();
 
         final Proposer proposer = new Proposer(numNodes, id, receiveQueueProposer, sendQueue);
+        final Acceptor acceptor = new Acceptor(receiveQueueAcceptor, sendQueue);
 
         onThread(() -> {
             try {MessageReceiving.run(group, receivePort, receiveQueueProposer);} catch (Exception e) {}
@@ -30,6 +31,9 @@ public class Main {
         });
         onThread(() -> {
             try {proposer.run();} catch (Exception e) {}
+        });
+        onThread(() -> {
+            try {acceptor.run();} catch (Exception e) {}
         });
     }
 
