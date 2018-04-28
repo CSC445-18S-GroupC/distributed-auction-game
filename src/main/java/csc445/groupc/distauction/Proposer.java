@@ -132,10 +132,10 @@ public class Proposer {
     }
 
     private void sendRequestToAllAcceptors(final long proposalId) {
-
+        // TODO: Implement this
     }
 
     private void sendAcceptRequestToAllAcceptors(final long proposalId, final GameStep value) {
-
+        // TODO: Implement this
     }
 }

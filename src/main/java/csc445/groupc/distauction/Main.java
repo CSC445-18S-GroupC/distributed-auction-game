@@ -1,6 +1,5 @@
 package csc445.groupc.distauction;
 
-import java.util.Scanner;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -12,28 +11,26 @@ public class Main {
         final int sendPort = 5323;
         final int receivePort = 5921;
 
+        final int numNodes = 3;
+        final int id = 0;
+
         final LinkedBlockingQueue<Integer> sendQueue = new LinkedBlockingQueue<>();
-        final LinkedBlockingQueue<Integer> receiveQueue = new LinkedBlockingQueue<>();
+
+        final LinkedBlockingQueue<Integer> receiveQueueProposer = new LinkedBlockingQueue<>();
+        final LinkedBlockingQueue<Integer> receiveQueueAcceptor = new LinkedBlockingQueue<>();
+        final LinkedBlockingQueue<Integer> receiveQueueLearner = new LinkedBlockingQueue<>();
+
+        final Proposer proposer = new Proposer(numNodes, id, receiveQueueProposer, sendQueue);
 
         onThread(() -> {
-            try {MessageReceiving.run(group, receivePort, receiveQueue);} catch (Exception e) {}
+            try {MessageReceiving.run(group, receivePort, receiveQueueProposer);} catch (Exception e) {}
         });
         onThread(() -> {
             try {MessageSending.run(group, sendPort, receivePort, sendQueue);} catch (Exception e) {}
         });
-
-        final Scanner kb = new Scanner(System.in);
-        while (true) {
-            System.out.print("> ");
-
-            final int message = kb.nextByte();
-            System.out.println("Queued:   " + message);
-
-            sendQueue.put(message);
-
-            final int receivedMessage = receiveQueue.take();
-            System.out.println("Pulled:   " + receivedMessage);
-        }
+        onThread(() -> {
+            try {proposer.run();} catch (Exception e) {}
+        });
     }
 
     private static void onThread(final Runnable runnable) {
