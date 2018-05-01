@@ -48,7 +48,7 @@ public class Learner {
         this.messageAcceptances = new HashMap<>();
     }
 
-    private void run() throws InterruptedException {
+    public void run() throws InterruptedException {
         running.set(true);
 
         // TODO: Add method to update game state when behind

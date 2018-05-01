@@ -22,6 +22,7 @@ public class Main {
 
         final Proposer proposer = new Proposer(numNodes, id, receiveQueueProposer, sendQueue);
         final Acceptor acceptor = new Acceptor(receiveQueueAcceptor, sendQueue);
+        final Learner learner = new Learner(numNodes, receiveQueueLearner, sendQueue);
 
         onThread(() -> {
             try {MessageReceiving.run(group, receivePort, receiveQueueProposer);} catch (Exception e) {}
@@ -34,6 +35,9 @@ public class Main {
         });
         onThread(() -> {
             try {acceptor.run();} catch (Exception e) {}
+        });
+        onThread(() -> {
+            try {learner.run();} catch (Exception e) {}
         });
     }
 
