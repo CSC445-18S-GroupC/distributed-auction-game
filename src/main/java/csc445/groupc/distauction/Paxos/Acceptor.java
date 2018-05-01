@@ -1,7 +1,12 @@
 package csc445.groupc.distauction.Paxos;
 
+import csc445.groupc.distauction.GameStep;
 import csc445.groupc.distauction.Paxos.Messages.Message;
+import csc445.groupc.distauction.Paxos.Messages.PaxosMessage;
+import csc445.groupc.distauction.Paxos.Messages.Prepare;
+import csc445.groupc.distauction.Paxos.Messages.Promise;
 
+import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -21,6 +26,16 @@ public class Acceptor {
     private final LinkedBlockingQueue<Message> sendQueue;
 
     /**
+     * The total number of nodes in the Paxos run.
+     */
+    private final int numNodes;
+
+    /**
+     * The id of this Acceptor node. Should be within [0, numNodes).
+     */
+    private final int id;
+
+    /**
      * The proposal id of the largest proposal that the Acceptor has promised.
      */
     private int promisedProposalId;
@@ -31,28 +46,36 @@ public class Acceptor {
      */
     private final AtomicBoolean running;
 
-    public Acceptor(final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue) {
+    private Optional<GameStep> acceptedValue;
+
+    public Acceptor(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue) {
+        this.numNodes = numNodes;
+
+        this.id = id;
         this.messageQueue = messageQueue;
         this.sendQueue = sendQueue;
 
         this.running = new AtomicBoolean(false);
 
         this.promisedProposalId = -1;
+        this.acceptedValue = Optional.empty();
     }
 
     public void run() throws InterruptedException {
         running.set(true);
 
         while (running.get()) {
-            // TODO: Change to use real messages
             final Message message = messageQueue.take();
 
-            // TODO: Update to work with actual messages
-            if (message.equals(PREPARE)) {
-                final int proposalId = 5;
+            System.out.println(this + " polled " + message);
+
+            if (message instanceof Prepare) {
+                final Prepare prepare = (Prepare) message;
+
+                final int proposalId = prepare.getProposalID();
 
                 if (!proposalIsObsolete(proposalId)) {
-                    if (alreadyHaveAProposal()) {
+                    if (alreadyAcceptedAProposal()) {
                         sendPromiseWithPreviousValue(proposalId);
                     } else {
                         sendRegularPromise(proposalId);
@@ -61,9 +84,13 @@ public class Acceptor {
                     promisedProposalId = proposalId;
                 }
             } else if (message.equals(ACCEPT_REQUEST)) {
+                // TODO: Update to work with actual messages
                 final int proposalId = 5;
+                final GameStep value = new GameStep();
 
                 if (!proposalIsObsolete(proposalId)) {
+                    acceptedValue = Optional.of(value);
+
                     sendAcceptToProposer(proposalId);
                     sendAcceptToAllLearners(proposalId);
                 }
@@ -79,17 +106,27 @@ public class Acceptor {
         return proposalId < promisedProposalId;
     }
 
-    private boolean alreadyHaveAProposal() {
-        // TODO: Implement
-        return false;
+    private boolean alreadyAcceptedAProposal() {
+        return acceptedValue.isPresent();
     }
 
     private void sendPromiseWithPreviousValue(final int proposalId) {
-        // TODO: Implement
+        final int recipient = Proposer.computeNodeId(proposalId, numNodes);
+        final Promise<GameStep> promise = new Promise<>(proposalId, promisedProposalId, acceptedValue.get()
+                , Optional.of(recipient), PaxosMessage.PROPOSER);
+
+        System.out.println(this + " sent " + promise);
+
+        // TODO: Actually do the send
     }
 
     private void sendRegularPromise(final int proposalId) {
-        // TODO: Implement
+        final int recipient = Proposer.computeNodeId(proposalId, numNodes);
+        final Promise<GameStep> promise = new Promise<>(proposalId, Optional.of(recipient), PaxosMessage.PROPOSER);
+
+        System.out.println(this + " sent " + promise);
+
+        // TODO: Actually do the send
     }
 
     private void sendAcceptToProposer(final int proposalId) {
@@ -98,5 +135,10 @@ public class Acceptor {
 
     private void sendAcceptToAllLearners(final int proposalId) {
         // TODO: Implement
+    }
+
+    @Override
+    public String toString() {
+        return "Acceptor[" + id + "]";
     }
 }

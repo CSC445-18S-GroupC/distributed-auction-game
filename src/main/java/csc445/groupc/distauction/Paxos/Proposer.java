@@ -156,4 +156,8 @@ public class Proposer {
     public String toString() {
         return "Proposer[" + id + "]";
     }
+
+    public static int computeNodeId(final int proposalId, final int numNodes) {
+        return proposalId % numNodes;
+    }
 }

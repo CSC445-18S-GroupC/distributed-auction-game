@@ -48,7 +48,7 @@ public class Main {
             final LinkedBlockingQueue<Message> receiveQueueLearner = new LinkedBlockingQueue<>();
 
             final Proposer proposer = new Proposer(numNodes, id, receiveQueueProposer, sendQueue);
-            final Acceptor acceptor = new Acceptor(receiveQueueAcceptor, sendQueue);
+            final Acceptor acceptor = new Acceptor(numNodes, id, receiveQueueAcceptor, sendQueue);
             final Learner learner = new Learner(numNodes, receiveQueueLearner, sendQueue);
 
             onThread(() -> {
@@ -81,6 +81,7 @@ public class Main {
             try {multicastSimulator.run();} catch (Exception e) {}
         });
 
+        allReceivingQueues.get(0).put(new ProposalRequest(new GameStep()));
         allReceivingQueues.get(0).put(new ProposalRequest(new GameStep()));
     }
 
