@@ -70,7 +70,7 @@ public class Main {
             });
             onThread(() -> {
                 try {
-                    MessageForwarding.run(receivingQueue, receiveQueueProposer, receiveQueueAcceptor, receiveQueueLearner);} catch (Exception e) {}
+                    MessageForwarding.run(id, receivingQueue, receiveQueueProposer, receiveQueueAcceptor, receiveQueueLearner);} catch (Exception e) {}
             });
         }
 
@@ -80,7 +80,7 @@ public class Main {
             try {multicastSimulator.run();} catch (Exception e) {}
         });
 
-        allSendingQueues.get(0).put(new Accept<Integer>(0, 100042, PaxosMessage.EVERYONE));
+        allSendingQueues.get(0).put(new Accept<Integer>(0, 100042, PaxosMessage.EVERYONE, PaxosMessage.PROPOSER));
     }
 
     private static void onThread(final Runnable runnable) {

@@ -34,9 +34,39 @@ public abstract class PaxosMessage extends Message implements Serializable {
     public static final Optional<Integer> EVERYONE = Optional.empty();
 
     protected final Optional<Integer> receiver;
+    protected final byte receiverRole;
 
-    public PaxosMessage(final Optional<Integer> receiver) {
+    public PaxosMessage(final Optional<Integer> receiver, final byte receiverRole) {
         this.receiver = receiver;
+        this.receiverRole = receiverRole;
+    }
+
+    public Optional<Integer> getReceiver() {
+        return receiver;
+    }
+
+    public byte getReceiverRole() {
+        return receiverRole;
+    }
+
+    private String getReceiverString() {
+        if (receiver.isPresent()) {
+            return receiver.get().toString();
+        } else {
+            return "Everyone";
+        }
+    }
+
+    private String getReceiverRoleString() {
+        if (receiverRole == PROPOSER) {
+            return "Proposer";
+        } else if (receiverRole == ACCEPTOR) {
+            return "Acceptor";
+        } else if (receiverRole == LEARNER) {
+            return "Acceptor";
+        } else {
+            return "Invalid role";
+        }
     }
 
     public static <A extends Serializable> PaxosMessage fromByteArray(byte[] array) throws IOException, ClassNotFoundException{
@@ -64,5 +94,10 @@ public abstract class PaxosMessage extends Message implements Serializable {
             default:
                 return null;
         }
+    }
+
+    @Override
+    public String toString() {
+        return ", receiver = " + getReceiverString() + ", receiverRole = " + getReceiverRoleString();
     }
 }

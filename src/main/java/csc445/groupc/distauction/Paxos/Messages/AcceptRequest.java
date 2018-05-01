@@ -23,8 +23,8 @@ public class AcceptRequest<A> extends PaxosMessage {
     private final int proposalID;
     private final A proposalValue;
     
-    public AcceptRequest(final int proposalID, final A proposalValue, final Optional<Integer> receiver){
-        super(receiver);
+    public AcceptRequest(final int proposalID, final A proposalValue, final Optional<Integer> receiver, final byte receiverRole){
+        super(receiver, receiverRole);
 
         this.proposalID = proposalID;
         this.proposalValue = proposalValue;
@@ -70,6 +70,6 @@ public class AcceptRequest<A> extends PaxosMessage {
 
     @Override
     public String toString() {
-        return "AcceptRequest(" + "proposalId = " + proposalID + ", proposalValue = " + proposalValue + ")";
+        return "AcceptRequest(" + "proposalId = " + proposalID + ", proposalValue = " + proposalValue + super.toString() + ")";
     }
 }

@@ -28,16 +28,16 @@ public class Promise<A extends Serializable> extends PaxosMessage {
     private final Optional<A> acceptedValue;
     private final int proposalID;
     
-    public Promise(final int proposalID, final Optional<Integer> receiver){
-        super(receiver);
+    public Promise(final int proposalID, final Optional<Integer> receiver, final byte receiverRole){
+        super(receiver, receiverRole);
 
         this.proposalID = proposalID;
         this.acceptedID = Optional.empty();
         this.acceptedValue = Optional.empty();
     }
     
-    public Promise(final int proposalID, final Integer acceptedID, final A acceptedValue, final Optional<Integer> receiver){
-        super(receiver);
+    public Promise(final int proposalID, final Integer acceptedID, final A acceptedValue, final Optional<Integer> receiver, final byte receiverRole){
+        super(receiver, receiverRole);
 
         this.proposalID = proposalID;
         this.acceptedID = Optional.of(acceptedID);
@@ -97,10 +97,10 @@ public class Promise<A extends Serializable> extends PaxosMessage {
             }catch(IOException | ClassNotFoundException ex){
                 System.out.println(ex.toString());
             }
-            promise = new Promise(pID, aID, value, EVERYONE);
+            promise = new Promise(pID, aID, value, EVERYONE, PROPOSER);
             return promise;
         }else{
-            promise = new Promise(pID, EVERYONE);
+            promise = new Promise(pID, EVERYONE, PROPOSER);
             return promise;
         }
     }
@@ -109,9 +109,9 @@ public class Promise<A extends Serializable> extends PaxosMessage {
     public String toString() {
         if (hasAcceptedValue()) {
             return "Promise(" + "proposalId = " + proposalID + ", acceptedId = " + acceptedID.get() +
-                    ", acceptedValue = " + acceptedValue.get() + ")";
+                    ", acceptedValue = " + acceptedValue.get() + super.toString() + ")";
         } else {
-            return "Promise(" + "proposalId = " + proposalID + ")";
+            return "Promise(" + "proposalId = " + proposalID + super.toString() + ")";
         }
     }
 }
