@@ -5,13 +5,25 @@
  */
 package csc445.groupc.distauction.Paxos.Messages;
 
-import csc445.groupc.distauction.GameState;
+import csc445.groupc.distauction.GameStep;
 
 /**
  *
  * @author bolen
  */
 public class ProposalRequest extends Message {
-    
-    GameState g = null;
+    final GameStep value;
+
+    public ProposalRequest(final GameStep value) {
+        this.value = value;
+    }
+
+    public GameStep getValue() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return "ProposalRequest(" + value + ")";
+    }
 }

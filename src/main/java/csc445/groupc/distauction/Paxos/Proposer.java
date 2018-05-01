@@ -2,6 +2,9 @@ package csc445.groupc.distauction.Paxos;
 
 import csc445.groupc.distauction.GameStep;
 import csc445.groupc.distauction.Paxos.Messages.Message;
+import csc445.groupc.distauction.Paxos.Messages.PaxosMessage;
+import csc445.groupc.distauction.Paxos.Messages.Prepare;
+import csc445.groupc.distauction.Paxos.Messages.ProposalRequest;
 
 import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -46,7 +49,7 @@ public class Proposer {
     /**
      * The id of the last proposal sent. Should follow (lastProposalId % numNodes) == id
      */
-    private long lastProposalId;
+    private int lastProposalId;
 
     /**
      * The value for the newest proposal made.
@@ -80,7 +83,7 @@ public class Proposer {
         this.reachedAcceptMajority = false;
     }
 
-    private long getNextProposalId() {
+    private int getNextProposalId() {
         lastProposalId += numNodes;
         lastProposalPromises = 0;
         reachedPromiseMajority = false;
@@ -92,12 +95,15 @@ public class Proposer {
         running.set(true);
 
         while (running.get()) {
-            // TODO: Change to use real messages
             final Message message = messageQueue.take();
 
+            System.out.println(this + " polled " + message);
+
             // TODO: Update to work with actual messages
-            if (message.equals(REQUEST)) {
-                newestProposalValue = Optional.of(new GameStep());   // TODO: Change to use the correct game step
+            if (message instanceof ProposalRequest) {
+                final ProposalRequest proposalRequest = (ProposalRequest) message;
+
+                newestProposalValue = Optional.of(proposalRequest.getValue());
                 sendRequestToAllAcceptors(getNextProposalId());
             } else if (message.equals(PROMISE_NO_VALUE) || message.equals(PROMISE_WITH_VALUE)) {
                 // TODO: Add a condition to check if the received promise is for the latest proposal
@@ -134,11 +140,20 @@ public class Proposer {
         running.set(false);
     }
 
-    private void sendRequestToAllAcceptors(final long proposalId) {
+    private void sendRequestToAllAcceptors(final int proposalId) throws InterruptedException {
+        final Prepare prepare = new Prepare(proposalId, PaxosMessage.EVERYONE, PaxosMessage.ACCEPTOR);
+
+        System.out.println(this + " sent " + prepare);
+
+        sendQueue.put(prepare);
+    }
+
+    private void sendAcceptRequestToAllAcceptors(final int proposalId, final GameStep value) {
         // TODO: Implement this
     }
 
-    private void sendAcceptRequestToAllAcceptors(final long proposalId, final GameStep value) {
-        // TODO: Implement this
+    @Override
+    public String toString() {
+        return "Proposer[" + id + "]";
     }
 }
