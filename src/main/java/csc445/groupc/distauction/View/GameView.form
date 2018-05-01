@@ -17,7 +17,7 @@
         </constraints>
         <properties>
           <font size="20"/>
-          <text value="Current Bid:"/>
+          <text value="Current Bid"/>
         </properties>
       </component>
       <component id="a0655" class="javax.swing.JLabel" binding="bidLabel">
@@ -28,7 +28,7 @@
           <font size="20"/>
           <horizontalAlignment value="0"/>
           <horizontalTextPosition value="0"/>
-          <text value="username: $0"/>
+          <text value="$0"/>
         </properties>
       </component>
       <component id="faff7" class="javax.swing.JButton" binding="bidButton">
