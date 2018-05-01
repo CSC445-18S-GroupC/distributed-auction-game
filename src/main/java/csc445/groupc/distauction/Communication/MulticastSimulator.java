@@ -1,5 +1,7 @@
 package csc445.groupc.distauction.Communication;
 
+import csc445.groupc.distauction.Paxos.Messages.Message;
+
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -9,12 +11,12 @@ import java.util.concurrent.LinkedBlockingQueue;
  * packet drops or odd behaviour with multicast.
  */
 public class MulticastSimulator {
-    private final List<LinkedBlockingQueue<Integer>> sendingQueues;
-    private final List<LinkedBlockingQueue<Integer>> receivingQueues;
+    private final List<LinkedBlockingQueue<Message>> sendingQueues;
+    private final List<LinkedBlockingQueue<Message>> receivingQueues;
 
     private boolean running;
 
-    public MulticastSimulator(final List<LinkedBlockingQueue<Integer>> sendingQueues, final List<LinkedBlockingQueue<Integer>> receivingQueues) {
+    public MulticastSimulator(final List<LinkedBlockingQueue<Message>> sendingQueues, final List<LinkedBlockingQueue<Message>> receivingQueues) {
         this.sendingQueues = sendingQueues;
         this.receivingQueues = receivingQueues;
 
@@ -24,10 +26,10 @@ public class MulticastSimulator {
     public void run() throws InterruptedException {
         running = true;
         while (running) {
-            for (final LinkedBlockingQueue<Integer> sender : sendingQueues) {
+            for (final LinkedBlockingQueue<Message> sender : sendingQueues) {
                 if (!sender.isEmpty()) {
-                    final Integer message = sender.take();
-                    for (final LinkedBlockingQueue<Integer> receiver : receivingQueues) {
+                    final Message message = sender.take();
+                    for (final LinkedBlockingQueue<Message> receiver : receivingQueues) {
                         receiver.put(message);
                     }
                 }

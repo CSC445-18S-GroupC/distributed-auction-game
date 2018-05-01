@@ -1,5 +1,7 @@
 package csc445.groupc.distauction.Paxos;
 
+import csc445.groupc.distauction.Paxos.Messages.Message;
+
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -15,8 +17,8 @@ public class Acceptor {
     private static final Integer ACCEPT = 4;
 
     // TODO: Change to actual messages
-    private final LinkedBlockingQueue<Integer> messageQueue;
-    private final LinkedBlockingQueue<Integer> sendQueue;
+    private final LinkedBlockingQueue<Message> messageQueue;
+    private final LinkedBlockingQueue<Message> sendQueue;
 
     /**
      * The proposal id of the largest proposal that the Acceptor has promised.
@@ -29,7 +31,7 @@ public class Acceptor {
      */
     private final AtomicBoolean running;
 
-    public Acceptor(final LinkedBlockingQueue<Integer> messageQueue, final LinkedBlockingQueue<Integer> sendQueue) {
+    public Acceptor(final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue) {
         this.messageQueue = messageQueue;
         this.sendQueue = sendQueue;
 
@@ -43,7 +45,7 @@ public class Acceptor {
 
         while (running.get()) {
             // TODO: Change to use real messages
-            final Integer message = messageQueue.take();
+            final Message message = messageQueue.take();
 
             // TODO: Update to work with actual messages
             if (message.equals(PREPARE)) {

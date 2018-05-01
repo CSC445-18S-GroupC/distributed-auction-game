@@ -4,6 +4,8 @@ import csc445.groupc.distauction.Communication.MessageForwarding;
 import csc445.groupc.distauction.Communication.MulticastSimulator;
 import csc445.groupc.distauction.Paxos.Acceptor;
 import csc445.groupc.distauction.Paxos.Learner;
+import csc445.groupc.distauction.Paxos.Messages.Accept;
+import csc445.groupc.distauction.Paxos.Messages.Message;
 import csc445.groupc.distauction.Paxos.Proposer;
 
 import java.util.ArrayList;
@@ -27,21 +29,21 @@ public class Main {
         onThread(() -> {
             try {MessageSending.run(group, sendPort, receivePort, sendQueue);} catch (Exception e) {}
         });*/
-        final List<LinkedBlockingQueue<Integer>> allSendingQueues = new ArrayList<>();
-        final List<LinkedBlockingQueue<Integer>> allReceivingQueues = new ArrayList<>();
+        final List<LinkedBlockingQueue<Message>> allSendingQueues = new ArrayList<>();
+        final List<LinkedBlockingQueue<Message>> allReceivingQueues = new ArrayList<>();
 
         for (int i = 0; i < numNodes; i++) {
             final int id = i;
 
-            final LinkedBlockingQueue<Integer> sendQueue = new LinkedBlockingQueue<>();
-            final LinkedBlockingQueue<Integer> receivingQueue = new LinkedBlockingQueue<>();
+            final LinkedBlockingQueue<Message> sendQueue = new LinkedBlockingQueue<>();
+            final LinkedBlockingQueue<Message> receivingQueue = new LinkedBlockingQueue<>();
 
             allSendingQueues.add(sendQueue);
             allReceivingQueues.add(receivingQueue);
 
-            final LinkedBlockingQueue<Integer> receiveQueueProposer = new LinkedBlockingQueue<>();
-            final LinkedBlockingQueue<Integer> receiveQueueAcceptor = new LinkedBlockingQueue<>();
-            final LinkedBlockingQueue<Integer> receiveQueueLearner = new LinkedBlockingQueue<>();
+            final LinkedBlockingQueue<Message> receiveQueueProposer = new LinkedBlockingQueue<>();
+            final LinkedBlockingQueue<Message> receiveQueueAcceptor = new LinkedBlockingQueue<>();
+            final LinkedBlockingQueue<Message> receiveQueueLearner = new LinkedBlockingQueue<>();
 
             final Proposer proposer = new Proposer(numNodes, id, receiveQueueProposer, sendQueue);
             final Acceptor acceptor = new Acceptor(receiveQueueAcceptor, sendQueue);
@@ -76,6 +78,8 @@ public class Main {
         onThread(() -> {
             try {multicastSimulator.run();} catch (Exception e) {}
         });
+
+        allSendingQueues.get(0).put(new Accept<Integer>(0, 100042));
     }
 
     private static void onThread(final Runnable runnable) {

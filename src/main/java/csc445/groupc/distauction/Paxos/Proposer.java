@@ -1,6 +1,7 @@
 package csc445.groupc.distauction.Paxos;
 
 import csc445.groupc.distauction.GameStep;
+import csc445.groupc.distauction.Paxos.Messages.Message;
 
 import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -33,8 +34,8 @@ public class Proposer {
     private final int id;
 
     // TODO: Change to actual messages
-    private final LinkedBlockingQueue<Integer> messageQueue;
-    private final LinkedBlockingQueue<Integer> sendQueue;
+    private final LinkedBlockingQueue<Message> messageQueue;
+    private final LinkedBlockingQueue<Message> sendQueue;
 
     /**
      * A value indicating if the Proposer should continue running. It is set to true when run() is called, and then is
@@ -61,8 +62,8 @@ public class Proposer {
     private boolean reachedPromiseMajority;
     private boolean reachedAcceptMajority;
 
-    public Proposer(final int numNodes, final int id, final LinkedBlockingQueue<Integer> messageQueue,
-                    final LinkedBlockingQueue<Integer> sendQueue) {
+    public Proposer(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue,
+                    final LinkedBlockingQueue<Message> sendQueue) {
         this.numNodes = numNodes;
         this.majority = (numNodes / 2) + 1;
 
@@ -92,7 +93,7 @@ public class Proposer {
 
         while (running.get()) {
             // TODO: Change to use real messages
-            final Integer message = messageQueue.take();
+            final Message message = messageQueue.take();
 
             // TODO: Update to work with actual messages
             if (message.equals(REQUEST)) {

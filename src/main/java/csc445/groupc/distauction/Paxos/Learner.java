@@ -1,6 +1,7 @@
 package csc445.groupc.distauction.Paxos;
 
 import csc445.groupc.distauction.GameStep;
+import csc445.groupc.distauction.Paxos.Messages.Message;
 
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -28,8 +29,8 @@ public class Learner {
     private final int majority;
 
     // TODO: Change to actual messages
-    private final LinkedBlockingQueue<Integer> messageQueue;
-    private final LinkedBlockingQueue<Integer> sendQueue;
+    private final LinkedBlockingQueue<Message> messageQueue;
+    private final LinkedBlockingQueue<Message> sendQueue;
 
     /**
      * A value indicating if the Learner should continue running. It is set to true when run() is called, and then is
@@ -39,7 +40,7 @@ public class Learner {
 
     private final HashMap<Integer, Integer> messageAcceptances;
 
-    public Learner(final int numNodes, final LinkedBlockingQueue<Integer> messageQueue, final LinkedBlockingQueue<Integer> sendQueue) {
+    public Learner(final int numNodes, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue) {
         this.numNodes = numNodes;
         this.majority = (numNodes / 2) + 1;
 
@@ -57,7 +58,7 @@ public class Learner {
 
         while (running.get()) {
             // TODO: Change to use real messages
-            final Integer message = messageQueue.take();
+            final Message message = messageQueue.take();
 
 
             // TODO: Update to work with actual messages
