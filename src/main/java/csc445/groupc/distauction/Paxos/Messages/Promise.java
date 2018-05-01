@@ -47,7 +47,19 @@ public class Promise<A extends Serializable> extends PaxosMessage {
     public boolean hasAcceptedValue() {
         return acceptedID.isPresent();
     }
-    
+
+    public int getAcceptedID() {
+        return acceptedID.get();
+    }
+
+    public A getAcceptedValue() {
+        return acceptedValue.get();
+    }
+
+    public int getProposalID() {
+        return proposalID;
+    }
+
     //don't guess size of value
     public byte[] toByteArray(){
         int pID = this.proposalID;

@@ -1,10 +1,7 @@
 package csc445.groupc.distauction.Paxos;
 
 import csc445.groupc.distauction.GameStep;
-import csc445.groupc.distauction.Paxos.Messages.Message;
-import csc445.groupc.distauction.Paxos.Messages.PaxosMessage;
-import csc445.groupc.distauction.Paxos.Messages.Prepare;
-import csc445.groupc.distauction.Paxos.Messages.ProposalRequest;
+import csc445.groupc.distauction.Paxos.Messages.*;
 
 import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -99,31 +96,36 @@ public class Proposer {
 
             System.out.println(this + " polled " + message);
 
-            // TODO: Update to work with actual messages
             if (message instanceof ProposalRequest) {
                 final ProposalRequest proposalRequest = (ProposalRequest) message;
 
                 newestProposalValue = Optional.of(proposalRequest.getValue());
                 sendRequestToAllAcceptors(getNextProposalId());
-            } else if (message.equals(PROMISE_NO_VALUE) || message.equals(PROMISE_WITH_VALUE)) {
-                // TODO: Add a condition to check if the received promise is for the latest proposal
+            } else if (message instanceof Promise) {
+                final Promise<GameStep> promise = (Promise<GameStep>) message;
+
+                // TODO: Add a condition to check if the received promise is for the latest proposal (?)
+
                 final boolean isLastProposal = true;
                 if (!reachedPromiseMajority && isLastProposal) {
                     ++lastProposalPromises;
-                    if (message.equals(PROMISE_WITH_VALUE)) {
-                        final boolean receivedProposalIdBetter = true;
+                    if (promise.hasAcceptedValue()) {
+                        // TODO: Double check that this works
+                        final boolean receivedProposalIdBetter = promise.getProposalID() > promise.getProposalID();
                         if (receivedProposalIdBetter) {
-                            // TODO: Change to the value contained in the promise
-                            newestProposalValue = Optional.of(new GameStep());
+                            newestProposalValue = Optional.of(promise.getAcceptedValue());
                         }
                     }
 
+                    System.out.println(this + " promises " + lastProposalPromises + "/" + majority);
                     if (lastProposalPromises >= majority) {
                         reachedPromiseMajority = true;
                         sendAcceptRequestToAllAcceptors(lastProposalId, newestProposalValue.get());
                     }
                 }
             } else if (message.equals(ACCEPT)) {
+                // TODO: Update to work with actual messages
+
                 final boolean isLastProposal = true;
                 if (!reachedAcceptMajority && isLastProposal) {
                     ++lastProposalAccepts;
@@ -148,8 +150,12 @@ public class Proposer {
         sendQueue.put(prepare);
     }
 
-    private void sendAcceptRequestToAllAcceptors(final int proposalId, final GameStep value) {
-        // TODO: Implement this
+    private void sendAcceptRequestToAllAcceptors(final int proposalId, final GameStep value) throws InterruptedException {
+        final AcceptRequest<GameStep> acceptRequest = new AcceptRequest<>(proposalId, value, PaxosMessage.EVERYONE, PaxosMessage.ACCEPTOR);
+
+        System.out.println(this + " sent " + acceptRequest);
+
+        sendQueue.put(acceptRequest);
     }
 
     @Override

@@ -110,23 +110,23 @@ public class Acceptor {
         return acceptedValue.isPresent();
     }
 
-    private void sendPromiseWithPreviousValue(final int proposalId) {
+    private void sendPromiseWithPreviousValue(final int proposalId) throws InterruptedException {
         final int recipient = Proposer.computeNodeId(proposalId, numNodes);
         final Promise<GameStep> promise = new Promise<>(proposalId, promisedProposalId, acceptedValue.get()
                 , Optional.of(recipient), PaxosMessage.PROPOSER);
 
         System.out.println(this + " sent " + promise);
 
-        // TODO: Actually do the send
+        sendQueue.put(promise);
     }
 
-    private void sendRegularPromise(final int proposalId) {
+    private void sendRegularPromise(final int proposalId) throws InterruptedException {
         final int recipient = Proposer.computeNodeId(proposalId, numNodes);
         final Promise<GameStep> promise = new Promise<>(proposalId, Optional.of(recipient), PaxosMessage.PROPOSER);
 
         System.out.println(this + " sent " + promise);
 
-        // TODO: Actually do the send
+        sendQueue.put(promise);
     }
 
     private void sendAcceptToProposer(final int proposalId) {
