@@ -1,5 +1,11 @@
 package csc445.groupc.distauction;
 
+import csc445.groupc.distauction.Communication.MessageForwarding;
+import csc445.groupc.distauction.Communication.MulticastSimulator;
+import csc445.groupc.distauction.Paxos.Acceptor;
+import csc445.groupc.distauction.Paxos.Learner;
+import csc445.groupc.distauction.Paxos.Proposer;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -60,7 +66,8 @@ public class Main {
                 }
             });
             onThread(() -> {
-                try {MessageForwarding.run(receivingQueue, receiveQueueProposer, receiveQueueAcceptor, receiveQueueLearner);} catch (Exception e) {}
+                try {
+                    MessageForwarding.run(receivingQueue, receiveQueueProposer, receiveQueueAcceptor, receiveQueueLearner);} catch (Exception e) {}
             });
         }
 

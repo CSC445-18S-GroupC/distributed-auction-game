@@ -1,4 +1,4 @@
-package csc445.groupc.distauction;
+package csc445.groupc.distauction.Paxos;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;

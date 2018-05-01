@@ -1,4 +1,4 @@
-package csc445.groupc.distauction;
+package csc445.groupc.distauction.Communication;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -10,6 +10,8 @@ public abstract class MessageForwarding {
                            final LinkedBlockingQueue<Integer> receiveQueueAcceptor, final LinkedBlockingQueue<Integer> receiveQueueLearner) throws InterruptedException {
         for (;;) {
             final Integer message = receivingQueue.take();
+
+            System.out.println(message);
 
             // TODO: Forward message to corresponding queue
         }

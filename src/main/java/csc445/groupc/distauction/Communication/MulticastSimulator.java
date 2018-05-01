@@ -1,4 +1,4 @@
-package csc445.groupc.distauction;
+package csc445.groupc.distauction.Communication;
 
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;

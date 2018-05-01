@@ -1,4 +1,6 @@
-package csc445.groupc.distauction;
+package csc445.groupc.distauction.Paxos;
+
+import csc445.groupc.distauction.GameStep;
 
 import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
