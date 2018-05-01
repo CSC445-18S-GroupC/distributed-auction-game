@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Optional;
 
 /**
  *
@@ -21,7 +22,9 @@ public class Prepare extends PaxosMessage {
     byte receiver;
     private final int proposalID;
     
-    public Prepare(int proposalID){
+    public Prepare(final int proposalID, final Optional<Integer> receiver){
+        super(receiver);
+
         this.proposalID = proposalID;
     }
     
@@ -56,5 +59,10 @@ public class Prepare extends PaxosMessage {
             System.out.println(ex.toString());
         }
         return prepare;
+    }
+
+    @Override
+    public String toString() {
+        return "Prepare(" + "proposalId = " + proposalID + ")";
     }
 }

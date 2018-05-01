@@ -6,6 +6,7 @@ import csc445.groupc.distauction.Paxos.Acceptor;
 import csc445.groupc.distauction.Paxos.Learner;
 import csc445.groupc.distauction.Paxos.Messages.Accept;
 import csc445.groupc.distauction.Paxos.Messages.Message;
+import csc445.groupc.distauction.Paxos.Messages.PaxosMessage;
 import csc445.groupc.distauction.Paxos.Proposer;
 
 import java.util.ArrayList;
@@ -79,7 +80,7 @@ public class Main {
             try {multicastSimulator.run();} catch (Exception e) {}
         });
 
-        allSendingQueues.get(0).put(new Accept<Integer>(0, 100042));
+        allSendingQueues.get(0).put(new Accept<Integer>(0, 100042, PaxosMessage.EVERYONE));
     }
 
     private static void onThread(final Runnable runnable) {

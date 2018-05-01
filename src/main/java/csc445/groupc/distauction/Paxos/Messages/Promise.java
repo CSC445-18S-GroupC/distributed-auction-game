@@ -28,16 +28,24 @@ public class Promise<A extends Serializable> extends PaxosMessage {
     private final Optional<A> acceptedValue;
     private final int proposalID;
     
-    public Promise(int proposalID){
+    public Promise(final int proposalID, final Optional<Integer> receiver){
+        super(receiver);
+
         this.proposalID = proposalID;
         this.acceptedID = Optional.empty();
         this.acceptedValue = Optional.empty();
     }
     
-    public Promise(int proposalID, Integer acceptedID, A acceptedValue){
+    public Promise(final int proposalID, final Integer acceptedID, final A acceptedValue, final Optional<Integer> receiver){
+        super(receiver);
+
         this.proposalID = proposalID;
         this.acceptedID = Optional.of(acceptedID);
         this.acceptedValue = Optional.of(acceptedValue);
+    }
+
+    public boolean hasAcceptedValue() {
+        return acceptedID.isPresent();
     }
     
     //don't guess size of value
@@ -89,11 +97,21 @@ public class Promise<A extends Serializable> extends PaxosMessage {
             }catch(IOException | ClassNotFoundException ex){
                 System.out.println(ex.toString());
             }
-            promise = new Promise(pID, aID, value);
+            promise = new Promise(pID, aID, value, EVERYONE);
             return promise;
         }else{
-            promise = new Promise(pID);
+            promise = new Promise(pID, EVERYONE);
             return promise;
+        }
+    }
+
+    @Override
+    public String toString() {
+        if (hasAcceptedValue()) {
+            return "Promise(" + "proposalId = " + proposalID + ", acceptedId = " + acceptedID.get() +
+                    ", acceptedValue = " + acceptedValue.get() + ")";
+        } else {
+            return "Promise(" + "proposalId = " + proposalID + ")";
         }
     }
 }

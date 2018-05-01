@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Optional;
 
 /**
  *
@@ -22,7 +23,9 @@ public class Accept<A> extends PaxosMessage {
     private final int proposalID;
     private final A proposalValue;
     
-    public Accept(int proposalID, A proposalValue){
+    public Accept(final int proposalID, final A proposalValue, final Optional<Integer> receiver){
+        super(receiver);
+
         this.proposalID = proposalID;
         this.proposalValue = proposalValue;
     }
@@ -72,5 +75,10 @@ public class Accept<A> extends PaxosMessage {
             System.out.println(ex.toString());
         }
         return accept;
+    }
+
+    @Override
+    public String toString() {
+        return "Accept(" + "proposalId = " + proposalID + ", proposalValue = " + proposalValue + ")";
     }
 }

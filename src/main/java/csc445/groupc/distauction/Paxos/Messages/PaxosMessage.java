@@ -9,6 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.Optional;
 
 /**
  *
@@ -29,7 +30,15 @@ public abstract class PaxosMessage extends Message implements Serializable {
     public static final byte PROPOSER = 0;
     public static final byte ACCEPTOR = 1;
     public static final byte LEARNER = 2;
-    
+
+    public static final Optional<Integer> EVERYONE = Optional.empty();
+
+    protected final Optional<Integer> receiver;
+
+    public PaxosMessage(final Optional<Integer> receiver) {
+        this.receiver = receiver;
+    }
+
     public static <A extends Serializable> PaxosMessage fromByteArray(byte[] array) throws IOException, ClassNotFoundException{
         byte opcode = 3;
         ByteArrayInputStream bis = new ByteArrayInputStream(array);
