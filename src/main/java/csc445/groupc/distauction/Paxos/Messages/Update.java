@@ -26,6 +26,6 @@ public class Update<A extends Serializable> extends PaxosMessage {
 
     @Override
     public String toString() {
-        return "Update(entryId = " + entryId + ", value = " + value + this + ")";
+        return "Update(entryId = " + entryId + ", value = " + value + super.toString() + ")";
     }
 }

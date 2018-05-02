@@ -99,7 +99,8 @@ public class Learner {
 
             processMessageLock.lock();
             try {
-                if (messageFromPreviousRound(message)) {
+                if (messageFromDifferentRound(message)) {
+                    if (DEBUG) System.out.println(this + " ignored outdated message " + message);
                     continue;
                 }
 
@@ -126,6 +127,8 @@ public class Learner {
                     final Update<GameStep> update = (Update<GameStep>) message;
                     final int entryId = update.getEntryId();
                     final GameStep value = update.getValue();
+
+                    System.out.println(this + " processed update " + update);
 
                     if (entryId == paxosRound) {
                         consensus(value);
@@ -183,10 +186,20 @@ public class Learner {
         // TODO: Finish implementing (apply to Game State)
     }
 
-    private boolean messageFromPreviousRound(final Message message) {
-        return message instanceof PaxosMessage &&
-                ((PaxosMessage) message).getPaxosRound() != paxosRound &&
-                ((PaxosMessage) message).getPaxosRound() != PaxosMessage.NO_SPECIFIC_ROUND;
+    private boolean messageFromDifferentRound(final Message message) {
+        if (message instanceof PaxosMessage && ((PaxosMessage) message).getPaxosRound() != PaxosMessage.NO_SPECIFIC_ROUND) {
+            final int messageRound = ((PaxosMessage) message).getPaxosRound();
+            final int prevLargest = largestKnownRound.get();
+
+            if (messageRound > prevLargest) {
+                largestKnownRound.compareAndSet(prevLargest, messageRound);
+            }
+
+            if (messageRound != paxosRound) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void newRound(final int newRound) {
@@ -203,6 +216,6 @@ public class Learner {
 
     @Override
     public String toString() {
-        return "Learner[" + id + "]";
+        return "Learner[" + id + "] @" + paxosRound;
     }
 }

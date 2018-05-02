@@ -6,6 +6,8 @@ import csc445.groupc.distauction.Paxos.Messages.*;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -14,7 +16,13 @@ import java.util.concurrent.locks.ReentrantLock;
  * Created by chris on 4/23/18.
  */
 public class Proposer {
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
+
+    private static final long TIMEOUT = 1000;
+    private static final long TIMEOUT_VARIATION = 100;
+    private static final TimeUnit TIMEOUT_UNIT = TimeUnit.MILLISECONDS;
+
+    private static final int ASSUMED_OUT_OF_DATE = 5;
 
     /**
      * The total number of nodes in the Paxos run.
@@ -62,6 +70,7 @@ public class Proposer {
     private int paxosRound;
     private final ReentrantLock processMessageLock;
     private final AtomicInteger largestKnownRound;
+    private final ThreadLocalRandom rand;
 
     public Proposer(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue,
                     final LinkedBlockingQueue<Message> sendQueue, final AtomicInteger largestKnownRound) {
@@ -85,6 +94,7 @@ public class Proposer {
         this.paxosRound = 1;
         this.processMessageLock = new ReentrantLock();
         this.largestKnownRound = largestKnownRound;
+        this.rand = ThreadLocalRandom.current();
     }
 
     private int getNextProposalId() {
@@ -97,15 +107,31 @@ public class Proposer {
         running.set(true);
 
         while (running.get()) {
-            final Message message = messageQueue.take();
+            Message message = messageQueue.poll(TIMEOUT + (rand.nextLong(TIMEOUT_VARIATION) - TIMEOUT_VARIATION / 2),
+                    TIMEOUT_UNIT);
 
-            // TODO: Implement resending after timeout
+            if (message == null) {
+                if (newestProposalValue.isPresent()) {
+                    message = new ProposalRequest(newestProposalValue.get());
+
+                    if (DEBUG) System.out.println(this + " requeued timed-out proposal " + message);
+
+                    if (lastProposalId > ASSUMED_OUT_OF_DATE * numNodes) {
+                        if (DEBUG) System.out.println(this + " assumed it is out of date");
+                        final int prevLargest = largestKnownRound.get();
+                        largestKnownRound.compareAndSet(prevLargest, prevLargest + 1);
+                    }
+                } else {
+                    continue;
+                }
+            }
 
             if (DEBUG) System.out.println(this + " polled " + message);
 
             processMessageLock.lock();
             try {
-                if (messageFromPreviousRound(message)) {
+                if (messageFromDifferentRound(message)) {
+                    if (DEBUG) System.out.println(this + " ignored outdated message " + message);
                     continue;
                 }
 
@@ -128,7 +154,7 @@ public class Proposer {
                             }
                         }
 
-                        if (DEBUG) System.out.println(this + " promises " + promiseCounts.get(proposalId) + "/" + majority);
+                        if (DEBUG) System.out.println(this + " promises (" + proposalId + ") " + promiseCounts.get(proposalId) + "/" + majority);
                         if (promiseCounts.get(proposalId) >= majority) {
                             promiseMajorities.put(proposalId, true);
                             sendAcceptRequestToAllAcceptors(proposalId, newestProposalValue.get());
@@ -141,7 +167,7 @@ public class Proposer {
                     if (!reachedAcceptMajority) {
                         incrementCount(acceptCounts, proposalId);
 
-                        if (DEBUG) System.out.println(this + " acceptances " + acceptCounts.get(proposalId) + "/" + majority);
+                        if (DEBUG) System.out.println(this + " acceptances (" + proposalId + ") " + acceptCounts.get(proposalId) + "/" + majority);
                         if (acceptCounts.get(proposalId) >= majority) {
                             reachedAcceptMajority = true;
 
@@ -201,15 +227,25 @@ public class Proposer {
         }
     }
 
-    private boolean messageFromPreviousRound(final Message message) {
-        return message instanceof PaxosMessage &&
-                ((PaxosMessage) message).getPaxosRound() != paxosRound &&
-                ((PaxosMessage) message).getPaxosRound() != PaxosMessage.NO_SPECIFIC_ROUND;
+    private boolean messageFromDifferentRound(final Message message) {
+        if (message instanceof PaxosMessage && ((PaxosMessage) message).getPaxosRound() != PaxosMessage.NO_SPECIFIC_ROUND) {
+            final int messageRound = ((PaxosMessage) message).getPaxosRound();
+            final int prevLargest = largestKnownRound.get();
+
+            if (messageRound > prevLargest) {
+                largestKnownRound.compareAndSet(prevLargest, messageRound);
+            }
+
+            if (messageRound != paxosRound) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public String toString() {
-        return "Proposer[" + id + "]";
+        return "Proposer[" + id + "] @" + paxosRound;
     }
 
     /**

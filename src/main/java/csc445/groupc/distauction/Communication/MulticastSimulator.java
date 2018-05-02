@@ -1,6 +1,7 @@
 package csc445.groupc.distauction.Communication;
 
 import csc445.groupc.distauction.Paxos.Messages.Message;
+import csc445.groupc.distauction.Paxos.Messages.ProposalRequest;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +38,7 @@ public class MulticastSimulator {
                 if (!sender.isEmpty()) {
                     final Message message = sender.take();
                     for (final LinkedBlockingQueue<Message> receiver : receivingQueues) {
-                        if (!DROP_CHANCE.isPresent() || rand.nextInt(DROP_CHANCE.get()) != 0) {
+                        if (!DROP_CHANCE.isPresent() || message instanceof ProposalRequest || rand.nextInt(DROP_CHANCE.get()) != 0) {
                             receiver.put(message);
                         } else {
                             if (DEBUG) System.out.println("Dropped " + message + " to a receiver");

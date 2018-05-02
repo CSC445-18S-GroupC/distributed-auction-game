@@ -10,7 +10,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Created by chris on 5/1/18.
  */
 public abstract class MessageForwarding {
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     public static void run(final int nodeId, final LinkedBlockingQueue<Message> receivingQueue, final LinkedBlockingQueue<Message> receiveQueueProposer,
                            final LinkedBlockingQueue<Message> receiveQueueAcceptor, final LinkedBlockingQueue<Message> receiveQueueLearner) throws InterruptedException {

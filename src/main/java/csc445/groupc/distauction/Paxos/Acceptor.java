@@ -13,7 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Created by chris on 4/28/18.
  */
 public class Acceptor {
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     private final LinkedBlockingQueue<Message> messageQueue;
     private final LinkedBlockingQueue<Message> sendQueue;
@@ -65,6 +65,11 @@ public class Acceptor {
     public void run() throws InterruptedException {
         running.set(true);
 
+        // TODO: Remove
+        if (id == 2) {
+            Thread.sleep(5000);
+        }
+
         while (running.get()) {
             final Message message = messageQueue.take();
 
@@ -72,7 +77,8 @@ public class Acceptor {
 
             processMessageLock.lock();
             try {
-                if (messageFromPreviousRound(message)) {
+                if (messageFromDifferentRound(message)) {
+                    if (DEBUG) System.out.println(this + " ignored outdated message " + message);
                     continue;
                 }
 
@@ -89,6 +95,8 @@ public class Acceptor {
                         }
 
                         promisedProposalId = proposalId;
+                    } else {
+                        if (DEBUG) System.out.println(this + " ignored prepare " + proposalId + " due to already promising " + promisedProposalId);
                     }
                 } else if (message instanceof AcceptRequest) {
                     final AcceptRequest<GameStep> acceptRequest = (AcceptRequest<GameStep>) message;
@@ -101,6 +109,8 @@ public class Acceptor {
 
                         sendAcceptToProposer(proposalId, value);
                         sendAcceptToAllLearners(proposalId, value);
+                    } else {
+                        if (DEBUG) System.out.println(this + " ignored accept request " + proposalId + " due to already promising " + promisedProposalId);
                     }
                 }
             } finally {
@@ -157,10 +167,20 @@ public class Acceptor {
         sendQueue.put(accept);
     }
 
-    private boolean messageFromPreviousRound(final Message message) {
-        return message instanceof PaxosMessage &&
-                ((PaxosMessage) message).getPaxosRound() != paxosRound &&
-                ((PaxosMessage) message).getPaxosRound() != PaxosMessage.NO_SPECIFIC_ROUND;
+    private boolean messageFromDifferentRound(final Message message) {
+        if (message instanceof PaxosMessage && ((PaxosMessage) message).getPaxosRound() != PaxosMessage.NO_SPECIFIC_ROUND) {
+            final int messageRound = ((PaxosMessage) message).getPaxosRound();
+            final int prevLargest = largestKnownRound.get();
+
+            if (messageRound > prevLargest) {
+                largestKnownRound.compareAndSet(prevLargest, messageRound);
+            }
+
+            if (messageRound != paxosRound) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void newRound(final int newRound) {
@@ -179,6 +199,6 @@ public class Acceptor {
 
     @Override
     public String toString() {
-        return "Acceptor[" + id + "]";
+        return "Acceptor[" + id + "] @" + paxosRound;
     }
 }

@@ -19,6 +19,6 @@ public class UpdateRequest extends PaxosMessage {
 
     @Override
     public String toString() {
-        return "UpdateRequest(entryId = " + entryId + this + ")";
+        return "UpdateRequest(entryId = " + entryId + super.toString() + ")";
     }
 }
