@@ -13,6 +13,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * Created by chris on 4/28/18.
  */
 public class Acceptor {
+    private static final boolean DEBUG = false;
+
     private final LinkedBlockingQueue<Message> messageQueue;
     private final LinkedBlockingQueue<Message> sendQueue;
 
@@ -66,7 +68,7 @@ public class Acceptor {
         while (running.get()) {
             final Message message = messageQueue.take();
 
-            System.out.println(this + " polled " + message);
+            if (DEBUG) System.out.println(this + " polled " + message);
 
             processMessageLock.lock();
             try {
@@ -124,7 +126,7 @@ public class Acceptor {
         final Promise<GameStep> promise = new Promise<>(proposalId, promisedProposalId, acceptedValue.get()
                 , Optional.of(recipient), PaxosMessage.PROPOSER, paxosRound);
 
-        System.out.println(this + " sent " + promise);
+        if (DEBUG) System.out.println(this + " sent " + promise);
 
         sendQueue.put(promise);
     }
@@ -133,7 +135,7 @@ public class Acceptor {
         final int recipient = Proposer.computeNodeId(proposalId, numNodes);
         final Promise<GameStep> promise = new Promise<>(proposalId, Optional.of(recipient), PaxosMessage.PROPOSER, paxosRound);
 
-        System.out.println(this + " sent " + promise);
+        if (DEBUG) System.out.println(this + " sent " + promise);
 
         sendQueue.put(promise);
     }
@@ -142,7 +144,7 @@ public class Acceptor {
         final int recipient = Proposer.computeNodeId(proposalId, numNodes);
         final Accept<GameStep> accept = new Accept<>(proposalId, value, Optional.of(recipient), PaxosMessage.PROPOSER, paxosRound);
 
-        System.out.println(this + " sent " + accept);
+        if (DEBUG) System.out.println(this + " sent " + accept);
 
         sendQueue.put(accept);
     }
@@ -150,7 +152,7 @@ public class Acceptor {
     private void sendAcceptToAllLearners(final int proposalId, final GameStep value) throws InterruptedException {
         final Accept<GameStep> accept = new Accept<>(proposalId, value, PaxosMessage.EVERYONE, PaxosMessage.LEARNER, paxosRound);
 
-        System.out.println(this + " sent " + accept);
+        if (DEBUG) System.out.println(this + " sent " + accept);
 
         sendQueue.put(accept);
     }
@@ -169,7 +171,7 @@ public class Acceptor {
             promisedProposalId = -1;
             acceptedValue = Optional.empty();
 
-            System.out.println(this + " started round " + newRound);
+            if (DEBUG) System.out.println(this + " started round " + newRound);
         } finally {
             processMessageLock.unlock();
         }

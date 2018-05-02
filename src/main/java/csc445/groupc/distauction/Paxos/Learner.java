@@ -15,6 +15,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * Created by chris on 4/28/18.
  */
 public class Learner {
+    private static final boolean DEBUG = false;
+
     private static final long TIMEOUT = 10;
     private static final TimeUnit TIMEOUT_UNIT = TimeUnit.MILLISECONDS;
 
@@ -93,6 +95,8 @@ public class Learner {
                 continue;
             }
 
+            if (DEBUG) System.out.println(this + " received " + message);
+
             processMessageLock.lock();
             try {
                 if (messageFromPreviousRound(message)) {
@@ -140,7 +144,7 @@ public class Learner {
     private void sendUpdateRequestToAllLearners(final int entryId) throws InterruptedException {
         final UpdateRequest updateRequest = new UpdateRequest(entryId, PaxosMessage.EVERYONE, PaxosMessage.LEARNER);
 
-        System.out.println(this + " sent " + updateRequest);
+        if (DEBUG) System.out.println(this + " sent " + updateRequest);
 
         sendQueue.put(updateRequest);
     }
@@ -148,7 +152,7 @@ public class Learner {
     private void sendValueToBehindLearners(final int entryId, final GameStep value) throws InterruptedException {
         final Update<GameStep> update = new Update<>(entryId, value, PaxosMessage.EVERYONE, PaxosMessage.LEARNER);
 
-        System.out.println(this + " sent " + update);
+        if (DEBUG) System.out.println(this + " sent " + update);
 
         sendQueue.put(update);
     }
@@ -159,7 +163,7 @@ public class Learner {
         } else {
             messageAcceptances.put(proposalId, 1);
         }
-        System.out.println(this + " accepts " + messageAcceptances.get(proposalId) + "/" + majority);
+        if (DEBUG) System.out.println(this + " accepts " + messageAcceptances.get(proposalId) + "/" + majority);
     }
 
     private boolean majorityJustReached(final int proposalId) {
@@ -167,14 +171,12 @@ public class Learner {
     }
 
     private void consensus(final GameStep value) {
-        System.out.println(this + " reached majority on " + value);
+        if (DEBUG) System.out.println(this + " reached majority on " + value);
 
         final int newRound = paxosRound + 1;
         proposer.newRound(newRound);
         acceptor.newRound(newRound);
         this.newRound(newRound);
-
-        System.out.println(this + " started round " + newRound);
 
         log.add(value);
 
@@ -192,6 +194,8 @@ public class Learner {
         try {
             paxosRound = newRound;
             messageAcceptances.clear();
+
+            if (DEBUG) System.out.println(this + " started round " + newRound);
         } finally {
             processMessageLock.unlock();
         }

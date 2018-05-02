@@ -4,9 +4,7 @@ import csc445.groupc.distauction.Communication.MessageForwarding;
 import csc445.groupc.distauction.Communication.MulticastSimulator;
 import csc445.groupc.distauction.Paxos.Acceptor;
 import csc445.groupc.distauction.Paxos.Learner;
-import csc445.groupc.distauction.Paxos.Messages.Accept;
 import csc445.groupc.distauction.Paxos.Messages.Message;
-import csc445.groupc.distauction.Paxos.Messages.PaxosMessage;
 import csc445.groupc.distauction.Paxos.Messages.ProposalRequest;
 import csc445.groupc.distauction.Paxos.Proposer;
 

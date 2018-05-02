@@ -10,6 +10,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Created by chris on 5/1/18.
  */
 public abstract class MessageForwarding {
+    private static final boolean DEBUG = false;
+
     public static void run(final int nodeId, final LinkedBlockingQueue<Message> receivingQueue, final LinkedBlockingQueue<Message> receiveQueueProposer,
                            final LinkedBlockingQueue<Message> receiveQueueAcceptor, final LinkedBlockingQueue<Message> receiveQueueLearner) throws InterruptedException {
         for (;;) {
@@ -32,13 +34,13 @@ public abstract class MessageForwarding {
                                                  final LinkedBlockingQueue<Message> receiveQueueAcceptor, final LinkedBlockingQueue<Message> receiveQueueLearner) throws InterruptedException {
         final byte receiverRole = message.getReceiverRole();
         if (receiverRole == PaxosMessage.PROPOSER) {
-            System.out.println("Sent to Proposer: " + message);
+            if (DEBUG) System.out.println("Sent to Proposer: " + message);
             receiveQueueProposer.put(message);
         } else if (receiverRole == PaxosMessage.ACCEPTOR) {
-            System.out.println("Sent to Acceptor: " + message);
+            if (DEBUG) System.out.println("Sent to Acceptor: " + message);
             receiveQueueAcceptor.put(message);
         } else if (receiverRole == PaxosMessage.LEARNER) {
-            System.out.println("Sent to Learner: " + message);
+            if (DEBUG) System.out.println("Sent to Learner: " + message);
             receiveQueueLearner.put(message);
         }
     }

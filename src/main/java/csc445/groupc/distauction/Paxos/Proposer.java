@@ -14,6 +14,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * Created by chris on 4/23/18.
  */
 public class Proposer {
+    private static final boolean DEBUG = false;
+
     /**
      * The total number of nodes in the Paxos run.
      */
@@ -97,7 +99,7 @@ public class Proposer {
         while (running.get()) {
             final Message message = messageQueue.take();
 
-            System.out.println(this + " polled " + message);
+            if (DEBUG) System.out.println(this + " polled " + message);
 
             processMessageLock.lock();
             try {
@@ -124,7 +126,7 @@ public class Proposer {
                             }
                         }
 
-                        System.out.println(this + " promises " + promiseCounts.get(proposalId) + "/" + majority);
+                        if (DEBUG) System.out.println(this + " promises " + promiseCounts.get(proposalId) + "/" + majority);
                         if (promiseCounts.get(proposalId) >= majority) {
                             promiseMajorities.put(proposalId, true);
                             sendAcceptRequestToAllAcceptors(proposalId, newestProposalValue.get());
@@ -137,11 +139,11 @@ public class Proposer {
                     if (!reachedAcceptMajority) {
                         incrementCount(acceptCounts, proposalId);
 
-                        System.out.println(this + " acceptances " + acceptCounts.get(proposalId) + "/" + majority);
+                        if (DEBUG) System.out.println(this + " acceptances " + acceptCounts.get(proposalId) + "/" + majority);
                         if (acceptCounts.get(proposalId) >= majority) {
                             reachedAcceptMajority = true;
 
-                            System.out.println(this + " reached majority on " + accept.getProposalValue());
+                            if (DEBUG) System.out.println(this + " reached majority on " + accept.getProposalValue());
                         }
                     }
                 }
@@ -163,7 +165,7 @@ public class Proposer {
             lastProposalId = id - numNodes;     // Subtracts numNodes, so that the next proposalId will be id
             reachedAcceptMajority = false;
 
-            System.out.println(this + " started round " + newRound);
+            if (DEBUG) System.out.println(this + " started round " + newRound);
         } finally {
             processMessageLock.unlock();
         }
@@ -176,7 +178,7 @@ public class Proposer {
     private void sendRequestToAllAcceptors(final int proposalId) throws InterruptedException {
         final Prepare prepare = new Prepare(proposalId, PaxosMessage.EVERYONE, PaxosMessage.ACCEPTOR, paxosRound);
 
-        System.out.println(this + " sent " + prepare);
+        if (DEBUG) System.out.println(this + " sent " + prepare);
 
         sendQueue.put(prepare);
     }
@@ -184,7 +186,7 @@ public class Proposer {
     private void sendAcceptRequestToAllAcceptors(final int proposalId, final GameStep value) throws InterruptedException {
         final AcceptRequest<GameStep> acceptRequest = new AcceptRequest<>(proposalId, value, PaxosMessage.EVERYONE, PaxosMessage.ACCEPTOR, paxosRound);
 
-        System.out.println(this + " sent " + acceptRequest);
+        if (DEBUG) System.out.println(this + " sent " + acceptRequest);
 
         sendQueue.put(acceptRequest);
     }
