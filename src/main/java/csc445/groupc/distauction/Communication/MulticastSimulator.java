@@ -3,6 +3,8 @@ package csc445.groupc.distauction.Communication;
 import csc445.groupc.distauction.Paxos.Messages.Message;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -11,16 +13,21 @@ import java.util.concurrent.LinkedBlockingQueue;
  * packet drops or odd behaviour with multicast.
  */
 public class MulticastSimulator {
+    private static final boolean DEBUG = true;
+    private static final Optional<Integer> DROP_CHANCE = Optional.of(10);
+
     private final List<LinkedBlockingQueue<Message>> sendingQueues;
     private final List<LinkedBlockingQueue<Message>> receivingQueues;
 
     private boolean running;
+    private final Random rand;
 
     public MulticastSimulator(final List<LinkedBlockingQueue<Message>> sendingQueues, final List<LinkedBlockingQueue<Message>> receivingQueues) {
         this.sendingQueues = sendingQueues;
         this.receivingQueues = receivingQueues;
 
         this.running = false;
+        this.rand = new Random();
     }
 
     public void run() throws InterruptedException {
@@ -30,7 +37,11 @@ public class MulticastSimulator {
                 if (!sender.isEmpty()) {
                     final Message message = sender.take();
                     for (final LinkedBlockingQueue<Message> receiver : receivingQueues) {
-                        receiver.put(message);
+                        if (!DROP_CHANCE.isPresent() || rand.nextInt(DROP_CHANCE.get()) != 0) {
+                            receiver.put(message);
+                        } else {
+                            if (DEBUG) System.out.println("Dropped " + message + " to a receiver");
+                        }
                     }
                 }
             }

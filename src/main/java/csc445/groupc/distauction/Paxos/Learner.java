@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Created by chris on 4/28/18.
  */
 public class Learner {
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     private static final long TIMEOUT = 10;
     private static final TimeUnit TIMEOUT_UNIT = TimeUnit.MILLISECONDS;

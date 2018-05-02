@@ -99,6 +99,8 @@ public class Proposer {
         while (running.get()) {
             final Message message = messageQueue.take();
 
+            // TODO: Implement resending after timeout
+
             if (DEBUG) System.out.println(this + " polled " + message);
 
             processMessageLock.lock();
