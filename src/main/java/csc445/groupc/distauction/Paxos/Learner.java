@@ -1,11 +1,9 @@
 package csc445.groupc.distauction.Paxos;
 
 import csc445.groupc.distauction.GameStep;
-import csc445.groupc.distauction.Paxos.Messages.Accept;
-import csc445.groupc.distauction.Paxos.Messages.Message;
-import csc445.groupc.distauction.Paxos.Messages.PaxosMessage;
-import csc445.groupc.distauction.Paxos.Messages.Promise;
+import csc445.groupc.distauction.Paxos.Messages.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -46,6 +44,7 @@ public class Learner {
 
     private int paxosRound;
     private final ReentrantLock processMessageLock;
+    private final ArrayList<GameStep> log;
 
     public Learner(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue, final Proposer proposer, final Acceptor acceptor) {
         this.numNodes = numNodes;
@@ -63,6 +62,7 @@ public class Learner {
 
         this.paxosRound = 1;
         this.processMessageLock = new ReentrantLock();
+        this.log = new ArrayList<>();
     }
 
     public void run() throws InterruptedException {
@@ -90,6 +90,17 @@ public class Learner {
                     if (majorityJustReached(proposalId)) {
                         consensus(value);
                     }
+                } else if (message instanceof UpdateRequest) {
+                    final UpdateRequest updateRequest = (UpdateRequest) message;
+                    final int entryId = updateRequest.getEntryId();
+
+                    // TODO: Confirm that this works
+                    if (entryId < paxosRound) {
+                        final GameStep value = log.get(entryId - 1);
+                        sendValueToBehindLearners(entryId, value);
+                    }
+                } else if (message instanceof Update) {
+                    // TODO: Implement
                 }
             } finally {
                 processMessageLock.unlock();
@@ -99,6 +110,14 @@ public class Learner {
 
     public void shutdown() {
         running.set(false);
+    }
+
+    private void sendValueToBehindLearners(final int entryId, final GameStep value) throws InterruptedException {
+        final Update<GameStep> update = new Update<>(entryId, value, PaxosMessage.EVERYONE, PaxosMessage.LEARNER, PaxosMessage.NO_SPECIFIC_ROUND);
+
+        System.out.println(this + " sent " + update);
+
+        sendQueue.put(update);
     }
 
     private void incrementAccepts(final int proposalId) {
@@ -124,11 +143,15 @@ public class Learner {
 
         System.out.println(this + " started round " + newRound);
 
+        log.add(value);
+
         // TODO: Finish implementing (apply to Game State)
     }
 
     private boolean messageFromPreviousRound(final Message message) {
-        return message instanceof PaxosMessage && ((PaxosMessage) message).getPaxosRound() != paxosRound;
+        return message instanceof PaxosMessage &&
+                ((PaxosMessage) message).getPaxosRound() != paxosRound &&
+                ((PaxosMessage) message).getPaxosRound() != PaxosMessage.NO_SPECIFIC_ROUND;
     }
 
     public void newRound(final int newRound) {

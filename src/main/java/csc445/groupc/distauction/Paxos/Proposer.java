@@ -195,7 +195,9 @@ public class Proposer {
     }
 
     private boolean messageFromPreviousRound(final Message message) {
-        return message instanceof PaxosMessage && ((PaxosMessage) message).getPaxosRound() != paxosRound;
+        return message instanceof PaxosMessage &&
+                ((PaxosMessage) message).getPaxosRound() != paxosRound &&
+                ((PaxosMessage) message).getPaxosRound() != PaxosMessage.NO_SPECIFIC_ROUND;
     }
 
     @Override
