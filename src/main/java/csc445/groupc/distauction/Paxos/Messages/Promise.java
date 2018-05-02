@@ -28,16 +28,16 @@ public class Promise<A extends Serializable> extends PaxosMessage {
     private final Optional<A> acceptedValue;
     private final int proposalID;
     
-    public Promise(final int proposalID, final Optional<Integer> receiver, final byte receiverRole){
-        super(receiver, receiverRole);
+    public Promise(final int proposalID, final Optional<Integer> receiver, final byte receiverRole, final int paxosRound){
+        super(receiver, receiverRole, paxosRound);
 
         this.proposalID = proposalID;
         this.acceptedID = Optional.empty();
         this.acceptedValue = Optional.empty();
     }
     
-    public Promise(final int proposalID, final Integer acceptedID, final A acceptedValue, final Optional<Integer> receiver, final byte receiverRole){
-        super(receiver, receiverRole);
+    public Promise(final int proposalID, final Integer acceptedID, final A acceptedValue, final Optional<Integer> receiver, final byte receiverRole, final int paxosRound){
+        super(receiver, receiverRole, paxosRound);
 
         this.proposalID = proposalID;
         this.acceptedID = Optional.of(acceptedID);
@@ -109,10 +109,10 @@ public class Promise<A extends Serializable> extends PaxosMessage {
             }catch(IOException | ClassNotFoundException ex){
                 System.out.println(ex.toString());
             }
-            promise = new Promise(pID, aID, value, EVERYONE, PROPOSER);
+            promise = new Promise(pID, aID, value, EVERYONE, PROPOSER, 0);
             return promise;
         }else{
-            promise = new Promise(pID, EVERYONE, PROPOSER);
+            promise = new Promise(pID, EVERYONE, PROPOSER, 0);
             return promise;
         }
     }

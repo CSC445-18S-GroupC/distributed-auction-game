@@ -23,8 +23,8 @@ public class Accept<A> extends PaxosMessage {
     private final int proposalID;
     private final A proposalValue;
     
-    public Accept(final int proposalID, final A proposalValue, final Optional<Integer> receiver, final byte receiverRole){
-        super(receiver, receiverRole);
+    public Accept(final int proposalID, final A proposalValue, final Optional<Integer> receiver, final byte receiverRole, final int paxosRound){
+        super(receiver, receiverRole, paxosRound);
 
         this.proposalID = proposalID;
         this.proposalValue = proposalValue;

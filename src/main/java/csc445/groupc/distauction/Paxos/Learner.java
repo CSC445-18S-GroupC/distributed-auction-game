@@ -3,6 +3,8 @@ package csc445.groupc.distauction.Paxos;
 import csc445.groupc.distauction.GameStep;
 import csc445.groupc.distauction.Paxos.Messages.Accept;
 import csc445.groupc.distauction.Paxos.Messages.Message;
+import csc445.groupc.distauction.Paxos.Messages.PaxosMessage;
+import csc445.groupc.distauction.Paxos.Messages.Promise;
 
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -38,7 +40,12 @@ public class Learner {
 
     private final HashMap<Integer, Integer> messageAcceptances;
 
-    public Learner(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue) {
+    private final Proposer proposer;
+    private final Acceptor acceptor;
+
+    private int paxosRound;
+
+    public Learner(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue, final Proposer proposer, final Acceptor acceptor) {
         this.numNodes = numNodes;
         this.majority = (numNodes / 2) + 1;
 
@@ -48,6 +55,11 @@ public class Learner {
 
         this.running = new AtomicBoolean(false);
         this.messageAcceptances = new HashMap<>();
+
+        this.proposer = proposer;
+        this.acceptor = acceptor;
+
+        this.paxosRound = 1;
     }
 
     public void run() throws InterruptedException {
@@ -57,6 +69,10 @@ public class Learner {
 
         while (running.get()) {
             final Message message = messageQueue.take();
+
+            if (messageFromPreviousRound(message)) {
+                continue;
+            }
 
             if (message instanceof Accept) {
                 final Accept<GameStep> accept = (Accept<GameStep>) message;
@@ -93,7 +109,22 @@ public class Learner {
     private void consensus(final GameStep value) {
         System.out.println(this + " reached majority on " + value);
 
-        // TODO: Implement
+        final int newRound = paxosRound + 1;
+        proposer.newRound(newRound);
+        acceptor.newRound(newRound);
+        this.newRound(newRound);
+
+        // TODO: Finish implementing (apply to Game State)
+    }
+
+    private boolean messageFromPreviousRound(final Message message) {
+        return message instanceof PaxosMessage && ((PaxosMessage) message).getPaxosRound() != paxosRound;
+    }
+
+    public void newRound(final int newRound) {
+        // TODO: Do this concurrency safe with run() method
+        paxosRound = newRound;
+        messageAcceptances.clear();
     }
 
     @Override

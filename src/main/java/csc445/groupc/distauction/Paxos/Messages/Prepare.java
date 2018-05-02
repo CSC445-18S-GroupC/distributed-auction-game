@@ -22,8 +22,8 @@ public class Prepare extends PaxosMessage {
     byte receiver;
     private final int proposalID;
     
-    public Prepare(final int proposalID, final Optional<Integer> receiver, final byte receiverRole){
-        super(receiver, receiverRole);
+    public Prepare(final int proposalID, final Optional<Integer> receiver, final byte receiverRole, final int paxosRound){
+        super(receiver, receiverRole, paxosRound);
 
         this.proposalID = proposalID;
     }

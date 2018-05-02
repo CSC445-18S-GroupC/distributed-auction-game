@@ -55,6 +55,8 @@ public class Proposer {
     private final HashMap<Integer, Boolean> promiseMajorities;
     private boolean reachedAcceptMajority;
 
+    private int paxosRound;
+
     public Proposer(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue,
                     final LinkedBlockingQueue<Message> sendQueue) {
         this.numNodes = numNodes;
@@ -73,6 +75,8 @@ public class Proposer {
         this.promiseCounts = new HashMap<>();
         this.acceptCounts = new HashMap<>();
         this.promiseMajorities = new HashMap<>();
+
+        this.paxosRound = 1;
     }
 
     private int getNextProposalId() {
@@ -88,6 +92,10 @@ public class Proposer {
             final Message message = messageQueue.take();
 
             System.out.println(this + " polled " + message);
+
+            if (messageFromPreviousRound(message)) {
+                continue;
+            }
 
             if (message instanceof ProposalRequest) {
                 final ProposalRequest proposalRequest = (ProposalRequest) message;
@@ -132,12 +140,24 @@ public class Proposer {
         }
     }
 
+    public void newRound(final int newRound) {
+        // TODO: Do this concurrency safe with run() method
+        paxosRound = newRound;
+        newestProposalValue = Optional.empty();
+        promiseCounts.clear();
+        acceptCounts.clear();
+        promiseMajorities.clear();
+
+        lastProposalId = id - numNodes;     // Subtracts numNodes, so that the next proposalId will be id
+        reachedAcceptMajority = false;
+    }
+
     public void shutdown() {
         running.set(false);
     }
 
     private void sendRequestToAllAcceptors(final int proposalId) throws InterruptedException {
-        final Prepare prepare = new Prepare(proposalId, PaxosMessage.EVERYONE, PaxosMessage.ACCEPTOR);
+        final Prepare prepare = new Prepare(proposalId, PaxosMessage.EVERYONE, PaxosMessage.ACCEPTOR, paxosRound);
 
         System.out.println(this + " sent " + prepare);
 
@@ -145,7 +165,7 @@ public class Proposer {
     }
 
     private void sendAcceptRequestToAllAcceptors(final int proposalId, final GameStep value) throws InterruptedException {
-        final AcceptRequest<GameStep> acceptRequest = new AcceptRequest<>(proposalId, value, PaxosMessage.EVERYONE, PaxosMessage.ACCEPTOR);
+        final AcceptRequest<GameStep> acceptRequest = new AcceptRequest<>(proposalId, value, PaxosMessage.EVERYONE, PaxosMessage.ACCEPTOR, paxosRound);
 
         System.out.println(this + " sent " + acceptRequest);
 
@@ -158,6 +178,10 @@ public class Proposer {
         } else {
             countTable.put(proposalId, 1);
         }
+    }
+
+    private boolean messageFromPreviousRound(final Message message) {
+        return message instanceof PaxosMessage && ((PaxosMessage) message).getPaxosRound() != paxosRound;
     }
 
     @Override

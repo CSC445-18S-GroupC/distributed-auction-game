@@ -12,6 +12,7 @@ import csc445.groupc.distauction.Paxos.Proposer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -49,7 +50,7 @@ public class Main {
 
             final Proposer proposer = new Proposer(numNodes, id, receiveQueueProposer, sendQueue);
             final Acceptor acceptor = new Acceptor(numNodes, id, receiveQueueAcceptor, sendQueue);
-            final Learner learner = new Learner(numNodes, id, receiveQueueLearner, sendQueue);
+            final Learner learner = new Learner(numNodes, id, receiveQueueLearner, sendQueue, proposer, acceptor);
 
             onThread(() -> {
                 try {
@@ -81,8 +82,12 @@ public class Main {
             try {multicastSimulator.run();} catch (Exception e) {}
         });
 
-        allReceivingQueues.get(0).put(new ProposalRequest(new GameStep()));
-        allReceivingQueues.get(0).put(new ProposalRequest(new GameStep()));
+        final Scanner kb = new Scanner(System.in);
+        while (true) {
+            kb.nextLine();
+            allReceivingQueues.get(0).put(new ProposalRequest(new GameStep()));
+            System.out.println("Sent proposal request");
+        }
     }
 
     private static void onThread(final Runnable runnable) {

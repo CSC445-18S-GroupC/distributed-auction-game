@@ -35,10 +35,12 @@ public abstract class PaxosMessage extends Message implements Serializable {
 
     protected final Optional<Integer> receiver;
     protected final byte receiverRole;
+    protected final int paxosRound;
 
-    public PaxosMessage(final Optional<Integer> receiver, final byte receiverRole) {
+    public PaxosMessage(final Optional<Integer> receiver, final byte receiverRole, final int paxosRound) {
         this.receiver = receiver;
         this.receiverRole = receiverRole;
+        this.paxosRound = paxosRound;
     }
 
     public Optional<Integer> getReceiver() {
@@ -47,6 +49,10 @@ public abstract class PaxosMessage extends Message implements Serializable {
 
     public byte getReceiverRole() {
         return receiverRole;
+    }
+
+    public int getPaxosRound() {
+        return paxosRound;
     }
 
     private String getReceiverString() {
@@ -98,6 +104,6 @@ public abstract class PaxosMessage extends Message implements Serializable {
 
     @Override
     public String toString() {
-        return ", receiver = " + getReceiverString() + ", receiverRole = " + getReceiverRoleString();
+        return ", receiver = " + getReceiverString() + ", receiverRole = " + getReceiverRoleString() + ", paxosRound = " + paxosRound;
     }
 }

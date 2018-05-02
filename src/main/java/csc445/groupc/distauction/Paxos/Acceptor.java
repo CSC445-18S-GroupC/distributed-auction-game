@@ -37,6 +37,8 @@ public class Acceptor {
 
     private Optional<GameStep> acceptedValue;
 
+    private int paxosRound;
+
     public Acceptor(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue) {
         this.numNodes = numNodes;
 
@@ -48,6 +50,8 @@ public class Acceptor {
 
         this.promisedProposalId = -1;
         this.acceptedValue = Optional.empty();
+
+        this.paxosRound = 1;
     }
 
     public void run() throws InterruptedException {
@@ -57,6 +61,10 @@ public class Acceptor {
             final Message message = messageQueue.take();
 
             System.out.println(this + " polled " + message);
+
+            if (messageFromPreviousRound(message)) {
+                continue;
+            }
 
             if (message instanceof Prepare) {
                 final Prepare prepare = (Prepare) message;
@@ -103,7 +111,7 @@ public class Acceptor {
     private void sendPromiseWithPreviousValue(final int proposalId) throws InterruptedException {
         final int recipient = Proposer.computeNodeId(proposalId, numNodes);
         final Promise<GameStep> promise = new Promise<>(proposalId, promisedProposalId, acceptedValue.get()
-                , Optional.of(recipient), PaxosMessage.PROPOSER);
+                , Optional.of(recipient), PaxosMessage.PROPOSER, paxosRound);
 
         System.out.println(this + " sent " + promise);
 
@@ -112,7 +120,7 @@ public class Acceptor {
 
     private void sendRegularPromise(final int proposalId) throws InterruptedException {
         final int recipient = Proposer.computeNodeId(proposalId, numNodes);
-        final Promise<GameStep> promise = new Promise<>(proposalId, Optional.of(recipient), PaxosMessage.PROPOSER);
+        final Promise<GameStep> promise = new Promise<>(proposalId, Optional.of(recipient), PaxosMessage.PROPOSER, paxosRound);
 
         System.out.println(this + " sent " + promise);
 
@@ -121,7 +129,7 @@ public class Acceptor {
 
     private void sendAcceptToProposer(final int proposalId, final GameStep value) throws InterruptedException {
         final int recipient = Proposer.computeNodeId(proposalId, numNodes);
-        final Accept<GameStep> accept = new Accept<>(proposalId, value, Optional.of(recipient), PaxosMessage.PROPOSER);
+        final Accept<GameStep> accept = new Accept<>(proposalId, value, Optional.of(recipient), PaxosMessage.PROPOSER, paxosRound);
 
         System.out.println(this + " sent " + accept);
 
@@ -129,11 +137,23 @@ public class Acceptor {
     }
 
     private void sendAcceptToAllLearners(final int proposalId, final GameStep value) throws InterruptedException {
-        final Accept<GameStep> accept = new Accept<>(proposalId, value, PaxosMessage.EVERYONE, PaxosMessage.LEARNER);
+        final Accept<GameStep> accept = new Accept<>(proposalId, value, PaxosMessage.EVERYONE, PaxosMessage.LEARNER, paxosRound);
 
         System.out.println(this + " sent " + accept);
 
         sendQueue.put(accept);
+    }
+
+    private boolean messageFromPreviousRound(final Message message) {
+        return message instanceof PaxosMessage && ((PaxosMessage) message).getPaxosRound() != paxosRound;
+    }
+
+    public void newRound(final int newRound) {
+        // TODO: Do this concurrency safe with run() method
+        paxosRound = newRound;
+
+        promisedProposalId = -1;
+        acceptedValue = Optional.empty();
     }
 
     @Override
