@@ -123,7 +123,7 @@ public class Proposer {
                         sendAcceptRequestToAllAcceptors(lastProposalId, newestProposalValue.get());
                     }
                 }
-            } else if (message instanceof Accept) {
+            } else if (message instanceof Accept) { // TODO: Is this really needed if Learner will reset rounds?
                 final Accept<GameStep> accept = (Accept<GameStep>) message;
 
                 // TODO: Add a condition to check if the received promise is for the latest proposal (?)

@@ -49,7 +49,7 @@ public class Main {
 
             final Proposer proposer = new Proposer(numNodes, id, receiveQueueProposer, sendQueue);
             final Acceptor acceptor = new Acceptor(numNodes, id, receiveQueueAcceptor, sendQueue);
-            final Learner learner = new Learner(numNodes, receiveQueueLearner, sendQueue);
+            final Learner learner = new Learner(numNodes, id, receiveQueueLearner, sendQueue);
 
             onThread(() -> {
                 try {

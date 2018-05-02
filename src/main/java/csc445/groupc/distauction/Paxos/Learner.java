@@ -1,6 +1,7 @@
 package csc445.groupc.distauction.Paxos;
 
 import csc445.groupc.distauction.GameStep;
+import csc445.groupc.distauction.Paxos.Messages.Accept;
 import csc445.groupc.distauction.Paxos.Messages.Message;
 
 import java.util.HashMap;
@@ -24,6 +25,11 @@ public class Learner {
     private final int numNodes;
 
     /**
+     * The id of this Learner node. Should be within [0, numNodes).
+     */
+    private final int id;
+
+    /**
      * The number of nodes needed to form a majority.
      */
     private final int majority;
@@ -40,10 +46,11 @@ public class Learner {
 
     private final HashMap<Integer, Integer> messageAcceptances;
 
-    public Learner(final int numNodes, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue) {
+    public Learner(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue) {
         this.numNodes = numNodes;
         this.majority = (numNodes / 2) + 1;
 
+        this.id = id;
         this.messageQueue = messageQueue;
         this.sendQueue = sendQueue;
 
@@ -57,14 +64,13 @@ public class Learner {
         // TODO: Add method to update game state when behind
 
         while (running.get()) {
-            // TODO: Change to use real messages
             final Message message = messageQueue.take();
 
+            if (message instanceof Accept) {
+                final Accept<GameStep> accept = (Accept<GameStep>) message;
 
-            // TODO: Update to work with actual messages
-            if (message.equals(ACCEPT)) {
-                final int proposalId = 5;
-                final GameStep value = new GameStep();
+                final int proposalId = accept.getProposalID();
+                final GameStep value = accept.getProposalValue();
 
                 incrementAccepts(proposalId);
 
@@ -85,13 +91,21 @@ public class Learner {
         } else {
             messageAcceptances.put(proposalId, 1);
         }
+        System.out.println(this + " accepts " + messageAcceptances.get(proposalId) + "/" + majority);
     }
 
     private boolean majorityJustReached(final int proposalId) {
         return messageAcceptances.get(proposalId) == majority;
     }
 
-    private void consensus(final GameStep gs) {
+    private void consensus(final GameStep value) {
+        System.out.println(this + " reached majority on " + value);
+
         // TODO: Implement
+    }
+
+    @Override
+    public String toString() {
+        return "Learner[" + id + "]";
     }
 }
