@@ -9,6 +9,7 @@ import csc445.groupc.distauction.Paxos.Messages.Promise;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by chris on 4/28/18.
@@ -44,6 +45,7 @@ public class Learner {
     private final Acceptor acceptor;
 
     private int paxosRound;
+    private final ReentrantLock processMessageLock;
 
     public Learner(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue, final Proposer proposer, final Acceptor acceptor) {
         this.numNodes = numNodes;
@@ -60,6 +62,7 @@ public class Learner {
         this.acceptor = acceptor;
 
         this.paxosRound = 1;
+        this.processMessageLock = new ReentrantLock();
     }
 
     public void run() throws InterruptedException {
@@ -70,21 +73,26 @@ public class Learner {
         while (running.get()) {
             final Message message = messageQueue.take();
 
-            if (messageFromPreviousRound(message)) {
-                continue;
-            }
-
-            if (message instanceof Accept) {
-                final Accept<GameStep> accept = (Accept<GameStep>) message;
-
-                final int proposalId = accept.getProposalID();
-                final GameStep value = accept.getProposalValue();
-
-                incrementAccepts(proposalId);
-
-                if (majorityJustReached(proposalId)) {
-                    consensus(value);
+            processMessageLock.lock();
+            try {
+                if (messageFromPreviousRound(message)) {
+                    continue;
                 }
+
+                if (message instanceof Accept) {
+                    final Accept<GameStep> accept = (Accept<GameStep>) message;
+
+                    final int proposalId = accept.getProposalID();
+                    final GameStep value = accept.getProposalValue();
+
+                    incrementAccepts(proposalId);
+
+                    if (majorityJustReached(proposalId)) {
+                        consensus(value);
+                    }
+                }
+            } finally {
+                processMessageLock.unlock();
             }
         }
     }
@@ -114,6 +122,8 @@ public class Learner {
         acceptor.newRound(newRound);
         this.newRound(newRound);
 
+        System.out.println(this + " started round " + newRound);
+
         // TODO: Finish implementing (apply to Game State)
     }
 
@@ -122,9 +132,13 @@ public class Learner {
     }
 
     public void newRound(final int newRound) {
-        // TODO: Do this concurrency safe with run() method
-        paxosRound = newRound;
-        messageAcceptances.clear();
+        processMessageLock.lock();
+        try {
+            paxosRound = newRound;
+            messageAcceptances.clear();
+        } finally {
+            processMessageLock.unlock();
+        }
     }
 
     @Override

@@ -6,6 +6,7 @@ import csc445.groupc.distauction.Paxos.Messages.*;
 import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by chris on 4/28/18.
@@ -38,6 +39,7 @@ public class Acceptor {
     private Optional<GameStep> acceptedValue;
 
     private int paxosRound;
+    private final ReentrantLock processMessageLock;
 
     public Acceptor(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue) {
         this.numNodes = numNodes;
@@ -52,6 +54,7 @@ public class Acceptor {
         this.acceptedValue = Optional.empty();
 
         this.paxosRound = 1;
+        this.processMessageLock = new ReentrantLock();
     }
 
     public void run() throws InterruptedException {
@@ -62,36 +65,41 @@ public class Acceptor {
 
             System.out.println(this + " polled " + message);
 
-            if (messageFromPreviousRound(message)) {
-                continue;
-            }
+            processMessageLock.lock();
+            try {
+                if (messageFromPreviousRound(message)) {
+                    continue;
+                }
 
-            if (message instanceof Prepare) {
-                final Prepare prepare = (Prepare) message;
+                if (message instanceof Prepare) {
+                    final Prepare prepare = (Prepare) message;
 
-                final int proposalId = prepare.getProposalID();
+                    final int proposalId = prepare.getProposalID();
 
-                if (!proposalIsObsolete(proposalId)) {
-                    if (alreadyAcceptedAProposal()) {
-                        sendPromiseWithPreviousValue(proposalId);
-                    } else {
-                        sendRegularPromise(proposalId);
+                    if (!proposalIsObsolete(proposalId)) {
+                        if (alreadyAcceptedAProposal()) {
+                            sendPromiseWithPreviousValue(proposalId);
+                        } else {
+                            sendRegularPromise(proposalId);
+                        }
+
+                        promisedProposalId = proposalId;
                     }
+                } else if (message instanceof AcceptRequest) {
+                    final AcceptRequest<GameStep> acceptRequest = (AcceptRequest<GameStep>) message;
 
-                    promisedProposalId = proposalId;
+                    final int proposalId = acceptRequest.getProposalID();
+                    final GameStep value = acceptRequest.getProposalValue();
+
+                    if (!proposalIsObsolete(proposalId)) {
+                        acceptedValue = Optional.of(value);
+
+                        sendAcceptToProposer(proposalId, value);
+                        sendAcceptToAllLearners(proposalId, value);
+                    }
                 }
-            } else if (message instanceof AcceptRequest) {
-                final AcceptRequest<GameStep> acceptRequest = (AcceptRequest<GameStep>) message;
-
-                final int proposalId = acceptRequest.getProposalID();
-                final GameStep value = acceptRequest.getProposalValue();
-
-                if (!proposalIsObsolete(proposalId)) {
-                    acceptedValue = Optional.of(value);
-
-                    sendAcceptToProposer(proposalId, value);
-                    sendAcceptToAllLearners(proposalId, value);
-                }
+            } finally {
+                processMessageLock.unlock();
             }
         }
     }
@@ -149,11 +157,17 @@ public class Acceptor {
     }
 
     public void newRound(final int newRound) {
-        // TODO: Do this concurrency safe with run() method
-        paxosRound = newRound;
+        processMessageLock.lock();
+        try {
+            paxosRound = newRound;
 
-        promisedProposalId = -1;
-        acceptedValue = Optional.empty();
+            promisedProposalId = -1;
+            acceptedValue = Optional.empty();
+
+            System.out.println(this + " started round " + newRound);
+        } finally {
+            processMessageLock.unlock();
+        }
     }
 
     @Override

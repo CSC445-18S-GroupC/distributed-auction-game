@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by chris on 4/23/18.
@@ -56,6 +57,7 @@ public class Proposer {
     private boolean reachedAcceptMajority;
 
     private int paxosRound;
+    private final ReentrantLock processMessageLock;
 
     public Proposer(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue,
                     final LinkedBlockingQueue<Message> sendQueue) {
@@ -77,6 +79,7 @@ public class Proposer {
         this.promiseMajorities = new HashMap<>();
 
         this.paxosRound = 1;
+        this.processMessageLock = new ReentrantLock();
     }
 
     private int getNextProposalId() {
@@ -93,63 +96,74 @@ public class Proposer {
 
             System.out.println(this + " polled " + message);
 
-            if (messageFromPreviousRound(message)) {
-                continue;
-            }
+            processMessageLock.lock();
+            try {
+                if (messageFromPreviousRound(message)) {
+                    continue;
+                }
 
-            if (message instanceof ProposalRequest) {
-                final ProposalRequest proposalRequest = (ProposalRequest) message;
+                if (message instanceof ProposalRequest) {
+                    final ProposalRequest proposalRequest = (ProposalRequest) message;
 
-                newestProposalValue = Optional.of(proposalRequest.getValue());
-                sendRequestToAllAcceptors(getNextProposalId());
-            } else if (message instanceof Promise) {
-                final Promise<GameStep> promise = (Promise<GameStep>) message;
-                final int proposalId = promise.getProposalID();
+                    newestProposalValue = Optional.of(proposalRequest.getValue());
+                    sendRequestToAllAcceptors(getNextProposalId());
+                } else if (message instanceof Promise) {
+                    final Promise<GameStep> promise = (Promise<GameStep>) message;
+                    final int proposalId = promise.getProposalID();
 
-                if (!promiseMajorities.getOrDefault(proposalId, false)) {
-                    incrementCount(promiseCounts, proposalId);
-                    if (promise.hasAcceptedValue()) {
-                        // TODO: Double check that this works
-                        final boolean receivedProposalIdBetter = promise.getAcceptedID() > proposalId;
-                        if (receivedProposalIdBetter) {
-                            newestProposalValue = Optional.of(promise.getAcceptedValue());
+                    if (!promiseMajorities.getOrDefault(proposalId, false)) {
+                        incrementCount(promiseCounts, proposalId);
+                        if (promise.hasAcceptedValue()) {
+                            // TODO: Double check that this works
+                            final boolean receivedProposalIdBetter = promise.getAcceptedID() > proposalId;
+                            if (receivedProposalIdBetter) {
+                                newestProposalValue = Optional.of(promise.getAcceptedValue());
+                            }
+                        }
+
+                        System.out.println(this + " promises " + promiseCounts.get(proposalId) + "/" + majority);
+                        if (promiseCounts.get(proposalId) >= majority) {
+                            promiseMajorities.put(proposalId, true);
+                            sendAcceptRequestToAllAcceptors(proposalId, newestProposalValue.get());
                         }
                     }
+                } else if (message instanceof Accept) { // TODO: Is this really needed if Learner will reset rounds?
+                    final Accept<GameStep> accept = (Accept<GameStep>) message;
+                    final int proposalId = accept.getProposalID();
 
-                    System.out.println(this + " promises " + promiseCounts.get(proposalId) + "/" + majority);
-                    if (promiseCounts.get(proposalId) >= majority) {
-                        promiseMajorities.put(proposalId, true);
-                        sendAcceptRequestToAllAcceptors(proposalId, newestProposalValue.get());
+                    if (!reachedAcceptMajority) {
+                        incrementCount(acceptCounts, proposalId);
+
+                        System.out.println(this + " acceptances " + acceptCounts.get(proposalId) + "/" + majority);
+                        if (acceptCounts.get(proposalId) >= majority) {
+                            reachedAcceptMajority = true;
+
+                            System.out.println(this + " reached majority on " + accept.getProposalValue());
+                        }
                     }
                 }
-            } else if (message instanceof Accept) { // TODO: Is this really needed if Learner will reset rounds?
-                final Accept<GameStep> accept = (Accept<GameStep>) message;
-                final int proposalId = accept.getProposalID();
-
-                if (!reachedAcceptMajority) {
-                    incrementCount(acceptCounts, proposalId);
-
-                    System.out.println(this + " acceptances " + acceptCounts.get(proposalId) + "/" + majority);
-                    if (acceptCounts.get(proposalId) >= majority) {
-                        reachedAcceptMajority = true;
-
-                        System.out.println(this + " reached majority on " + accept.getProposalValue());
-                    }
-                }
+            } finally {
+                processMessageLock.unlock();
             }
         }
     }
 
     public void newRound(final int newRound) {
-        // TODO: Do this concurrency safe with run() method
-        paxosRound = newRound;
-        newestProposalValue = Optional.empty();
-        promiseCounts.clear();
-        acceptCounts.clear();
-        promiseMajorities.clear();
+        processMessageLock.lock();
+        try {
+            paxosRound = newRound;
+            newestProposalValue = Optional.empty();
+            promiseCounts.clear();
+            acceptCounts.clear();
+            promiseMajorities.clear();
 
-        lastProposalId = id - numNodes;     // Subtracts numNodes, so that the next proposalId will be id
-        reachedAcceptMajority = false;
+            lastProposalId = id - numNodes;     // Subtracts numNodes, so that the next proposalId will be id
+            reachedAcceptMajority = false;
+
+            System.out.println(this + " started round " + newRound);
+        } finally {
+            processMessageLock.unlock();
+        }
     }
 
     public void shutdown() {
