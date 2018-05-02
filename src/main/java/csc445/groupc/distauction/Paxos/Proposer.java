@@ -3,6 +3,7 @@ package csc445.groupc.distauction.Paxos;
 import csc445.groupc.distauction.GameStep;
 import csc445.groupc.distauction.Paxos.Messages.*;
 
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -11,13 +12,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Created by chris on 4/23/18.
  */
 public class Proposer {
-    private static final Integer REQUEST = 9;
-    private static final Integer PREPARE = 0;
-    private static final Integer PROMISE_NO_VALUE = 1;
-    private static final Integer PROMISE_WITH_VALUE = 2;
-    private static final Integer ACCEPT_REQUEST = 3;
-    private static final Integer ACCEPT = 4;
-
     /**
      * The total number of nodes in the Paxos run.
      */
@@ -56,10 +50,10 @@ public class Proposer {
     /**
      * The number of promises received from Acceptors for the last proposal made.
      */
-    private int lastProposalPromises;   // TODO: Change to HashMap
-    private int lastProposalAccepts;    // TODO: Change to HashMap
+    private final HashMap<Integer, Integer> promiseCounts;
+    private final HashMap<Integer, Integer> acceptCounts;
 
-    private boolean reachedPromiseMajority;     // TODO: Change to HashMap (?)
+    private final HashMap<Integer, Boolean> promiseMajorities;
     private boolean reachedAcceptMajority;
 
     public Proposer(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue,
@@ -75,15 +69,15 @@ public class Proposer {
 
         this.running = new AtomicBoolean(false);
         this.newestProposalValue = Optional.empty();
-        this.lastProposalPromises = 0;
-        this.reachedPromiseMajority = false;
         this.reachedAcceptMajority = false;
+
+        this.promiseCounts = new HashMap<>();
+        this.acceptCounts = new HashMap<>();
+        this.promiseMajorities = new HashMap<>();
     }
 
     private int getNextProposalId() {
         lastProposalId += numNodes;
-        lastProposalPromises = 0;
-        reachedPromiseMajority = false;
         reachedAcceptMajority = false;
         return lastProposalId;
     }
@@ -103,36 +97,33 @@ public class Proposer {
                 sendRequestToAllAcceptors(getNextProposalId());
             } else if (message instanceof Promise) {
                 final Promise<GameStep> promise = (Promise<GameStep>) message;
+                final int proposalId = promise.getProposalID();
 
-                // TODO: Add a condition to check if the received promise is for the latest proposal (?)
-
-                final boolean isLastProposal = true;
-                if (!reachedPromiseMajority && isLastProposal) {
-                    ++lastProposalPromises;
+                if (!promiseMajorities.getOrDefault(proposalId, false)) {
+                    incrementCount(promiseCounts, proposalId);
                     if (promise.hasAcceptedValue()) {
                         // TODO: Double check that this works
-                        final boolean receivedProposalIdBetter = promise.getProposalID() > promise.getProposalID();
+                        final boolean receivedProposalIdBetter = promise.getAcceptedID() > proposalId;
                         if (receivedProposalIdBetter) {
                             newestProposalValue = Optional.of(promise.getAcceptedValue());
                         }
                     }
 
-                    System.out.println(this + " promises " + lastProposalPromises + "/" + majority);
-                    if (lastProposalPromises >= majority) {
-                        reachedPromiseMajority = true;
-                        sendAcceptRequestToAllAcceptors(lastProposalId, newestProposalValue.get());
+                    System.out.println(this + " promises " + promiseCounts.get(proposalId) + "/" + majority);
+                    if (promiseCounts.get(proposalId) >= majority) {
+                        promiseMajorities.put(proposalId, true);
+                        sendAcceptRequestToAllAcceptors(proposalId, newestProposalValue.get());
                     }
                 }
             } else if (message instanceof Accept) { // TODO: Is this really needed if Learner will reset rounds?
                 final Accept<GameStep> accept = (Accept<GameStep>) message;
+                final int proposalId = accept.getProposalID();
 
-                // TODO: Add a condition to check if the received promise is for the latest proposal (?)
-                final boolean isLastProposal = true;
-                if (!reachedAcceptMajority && isLastProposal) {
-                    ++lastProposalAccepts;
+                if (!reachedAcceptMajority) {
+                    incrementCount(acceptCounts, proposalId);
 
-                    System.out.println(this + " acceptances " + lastProposalAccepts + "/" + majority);
-                    if (lastProposalAccepts >= majority) {
+                    System.out.println(this + " acceptances " + acceptCounts.get(proposalId) + "/" + majority);
+                    if (acceptCounts.get(proposalId) >= majority) {
                         reachedAcceptMajority = true;
 
                         System.out.println(this + " reached majority on " + accept.getProposalValue());
@@ -162,11 +153,26 @@ public class Proposer {
         sendQueue.put(acceptRequest);
     }
 
+    private void incrementCount(final HashMap<Integer, Integer> countTable, final int proposalId) {
+        if (countTable.containsKey(proposalId)) {
+            countTable.compute(proposalId, (key, prev) -> prev + 1);
+        } else {
+            countTable.put(proposalId, 1);
+        }
+    }
+
     @Override
     public String toString() {
         return "Proposer[" + id + "]";
     }
 
+    /**
+     * Uses the proposalId of a message to determine which node sent the message.
+     *
+     * @param proposalId The proposalId of the node to identify.
+     * @param numNodes The number of nodes in the Paxos run.
+     * @return The id of the node.
+     */
     public static int computeNodeId(final int proposalId, final int numNodes) {
         return proposalId % numNodes;
     }

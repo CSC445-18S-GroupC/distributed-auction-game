@@ -12,13 +12,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Created by chris on 4/28/18.
  */
 public class Learner {
-    private static final Integer REQUEST = 9;
-    private static final Integer PREPARE = 0;
-    private static final Integer PROMISE_NO_VALUE = 1;
-    private static final Integer PROMISE_WITH_VALUE = 2;
-    private static final Integer ACCEPT_REQUEST = 3;
-    private static final Integer ACCEPT = 4;
-
     /**
      * The total number of nodes in the Paxos run.
      */
