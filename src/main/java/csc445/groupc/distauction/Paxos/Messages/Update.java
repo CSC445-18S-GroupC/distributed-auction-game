@@ -10,8 +10,8 @@ public class Update<A extends Serializable> extends PaxosMessage {
     private final int entryId;
     private final A value;
 
-    public Update(final int entryId, final A value, final Optional<Integer> receiver, final byte receiverRole, final int paxosRound) {
-        super(receiver, receiverRole, paxosRound);
+    public Update(final int entryId, final A value, final Optional<Integer> receiver, final byte receiverRole) {
+        super(receiver, receiverRole, NO_SPECIFIC_ROUND);
         this.entryId = entryId;
         this.value = value;
     }

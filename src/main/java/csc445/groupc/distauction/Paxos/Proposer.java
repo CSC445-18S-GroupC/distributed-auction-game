@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -58,9 +59,10 @@ public class Proposer {
 
     private int paxosRound;
     private final ReentrantLock processMessageLock;
+    private final AtomicInteger largestKnownRound;
 
     public Proposer(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue,
-                    final LinkedBlockingQueue<Message> sendQueue) {
+                    final LinkedBlockingQueue<Message> sendQueue, final AtomicInteger largestKnownRound) {
         this.numNodes = numNodes;
         this.majority = (numNodes / 2) + 1;
 
@@ -80,6 +82,7 @@ public class Proposer {
 
         this.paxosRound = 1;
         this.processMessageLock = new ReentrantLock();
+        this.largestKnownRound = largestKnownRound;
     }
 
     private int getNextProposalId() {

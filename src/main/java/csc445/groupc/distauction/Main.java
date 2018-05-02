@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by chris on 4/13/18.
@@ -37,6 +38,7 @@ public class Main {
 
         for (int i = 0; i < numNodes; i++) {
             final int id = i;
+            final AtomicInteger largestKnownRound = new AtomicInteger(0);
 
             final LinkedBlockingQueue<Message> sendQueue = new LinkedBlockingQueue<>();
             final LinkedBlockingQueue<Message> receivingQueue = new LinkedBlockingQueue<>();
@@ -48,9 +50,9 @@ public class Main {
             final LinkedBlockingQueue<Message> receiveQueueAcceptor = new LinkedBlockingQueue<>();
             final LinkedBlockingQueue<Message> receiveQueueLearner = new LinkedBlockingQueue<>();
 
-            final Proposer proposer = new Proposer(numNodes, id, receiveQueueProposer, sendQueue);
-            final Acceptor acceptor = new Acceptor(numNodes, id, receiveQueueAcceptor, sendQueue);
-            final Learner learner = new Learner(numNodes, id, receiveQueueLearner, sendQueue, proposer, acceptor);
+            final Proposer proposer = new Proposer(numNodes, id, receiveQueueProposer, sendQueue, largestKnownRound);
+            final Acceptor acceptor = new Acceptor(numNodes, id, receiveQueueAcceptor, sendQueue, largestKnownRound);
+            final Learner learner = new Learner(numNodes, id, receiveQueueLearner, sendQueue, proposer, acceptor, largestKnownRound);
 
             onThread(() -> {
                 try {

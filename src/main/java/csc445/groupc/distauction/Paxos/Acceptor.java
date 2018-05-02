@@ -6,6 +6,7 @@ import csc445.groupc.distauction.Paxos.Messages.*;
 import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -40,8 +41,9 @@ public class Acceptor {
 
     private int paxosRound;
     private final ReentrantLock processMessageLock;
+    private final AtomicInteger largestKnownRound;
 
-    public Acceptor(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue) {
+    public Acceptor(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue, final AtomicInteger largestKnownRound) {
         this.numNodes = numNodes;
 
         this.id = id;
@@ -55,6 +57,7 @@ public class Acceptor {
 
         this.paxosRound = 1;
         this.processMessageLock = new ReentrantLock();
+        this.largestKnownRound = largestKnownRound;
     }
 
     public void run() throws InterruptedException {

@@ -6,13 +6,18 @@ import csc445.groupc.distauction.Paxos.Messages.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by chris on 4/28/18.
  */
 public class Learner {
+    private static final long TIMEOUT = 10;
+    private static final TimeUnit TIMEOUT_UNIT = TimeUnit.MILLISECONDS;
+
     /**
      * The total number of nodes in the Paxos run.
      */
@@ -44,9 +49,11 @@ public class Learner {
 
     private int paxosRound;
     private final ReentrantLock processMessageLock;
+    private final AtomicInteger largestKnownRound;
+
     private final ArrayList<GameStep> log;
 
-    public Learner(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue, final Proposer proposer, final Acceptor acceptor) {
+    public Learner(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue, final Proposer proposer, final Acceptor acceptor, final AtomicInteger largestKnownRound) {
         this.numNodes = numNodes;
         this.majority = (numNodes / 2) + 1;
 
@@ -62,16 +69,29 @@ public class Learner {
 
         this.paxosRound = 1;
         this.processMessageLock = new ReentrantLock();
+        this.largestKnownRound = largestKnownRound;
+
         this.log = new ArrayList<>();
     }
 
     public void run() throws InterruptedException {
         running.set(true);
 
-        // TODO: Add method to update game state when behind
+        // TODO: Remove
+        if (id == 2) {
+            Thread.sleep(5000);
+        }
 
         while (running.get()) {
-            final Message message = messageQueue.take();
+            final Message message = messageQueue.poll(TIMEOUT, TIMEOUT_UNIT);
+
+            if (largestKnownRound.get() > paxosRound) {
+                sendUpdateRequestToAllLearners(paxosRound);
+            }
+
+            if (message == null) {
+                continue;
+            }
 
             processMessageLock.lock();
             try {
@@ -94,13 +114,18 @@ public class Learner {
                     final UpdateRequest updateRequest = (UpdateRequest) message;
                     final int entryId = updateRequest.getEntryId();
 
-                    // TODO: Confirm that this works
                     if (entryId < paxosRound) {
                         final GameStep value = log.get(entryId - 1);
                         sendValueToBehindLearners(entryId, value);
                     }
                 } else if (message instanceof Update) {
-                    // TODO: Implement
+                    final Update<GameStep> update = (Update<GameStep>) message;
+                    final int entryId = update.getEntryId();
+                    final GameStep value = update.getValue();
+
+                    if (entryId == paxosRound) {
+                        consensus(value);
+                    }
                 }
             } finally {
                 processMessageLock.unlock();
@@ -112,8 +137,16 @@ public class Learner {
         running.set(false);
     }
 
+    private void sendUpdateRequestToAllLearners(final int entryId) throws InterruptedException {
+        final UpdateRequest updateRequest = new UpdateRequest(entryId, PaxosMessage.EVERYONE, PaxosMessage.LEARNER);
+
+        System.out.println(this + " sent " + updateRequest);
+
+        sendQueue.put(updateRequest);
+    }
+
     private void sendValueToBehindLearners(final int entryId, final GameStep value) throws InterruptedException {
-        final Update<GameStep> update = new Update<>(entryId, value, PaxosMessage.EVERYONE, PaxosMessage.LEARNER, PaxosMessage.NO_SPECIFIC_ROUND);
+        final Update<GameStep> update = new Update<>(entryId, value, PaxosMessage.EVERYONE, PaxosMessage.LEARNER);
 
         System.out.println(this + " sent " + update);
 
