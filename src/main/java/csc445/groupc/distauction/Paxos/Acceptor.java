@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Created by chris on 4/28/18.
  */
 public class Acceptor {
-    // TODO: Change to actual messages
     private final LinkedBlockingQueue<Message> messageQueue;
     private final LinkedBlockingQueue<Message> sendQueue;
 
@@ -76,7 +75,6 @@ public class Acceptor {
             } else if (message instanceof AcceptRequest) {
                 final AcceptRequest<GameStep> acceptRequest = (AcceptRequest<GameStep>) message;
 
-                // TODO: Update to work with actual messages
                 final int proposalId = acceptRequest.getProposalID();
                 final GameStep value = acceptRequest.getProposalValue();
 

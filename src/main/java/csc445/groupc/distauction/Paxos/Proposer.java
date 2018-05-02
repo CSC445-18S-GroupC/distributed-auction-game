@@ -27,7 +27,6 @@ public class Proposer {
      */
     private final int id;
 
-    // TODO: Change to actual messages
     private final LinkedBlockingQueue<Message> messageQueue;
     private final LinkedBlockingQueue<Message> sendQueue;
 

@@ -27,7 +27,6 @@ public class Learner {
      */
     private final int majority;
 
-    // TODO: Change to actual messages
     private final LinkedBlockingQueue<Message> messageQueue;
     private final LinkedBlockingQueue<Message> sendQueue;
 
