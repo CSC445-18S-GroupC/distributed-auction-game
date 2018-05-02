@@ -1,10 +1,7 @@
 package csc445.groupc.distauction.Paxos;
 
 import csc445.groupc.distauction.GameStep;
-import csc445.groupc.distauction.Paxos.Messages.Message;
-import csc445.groupc.distauction.Paxos.Messages.PaxosMessage;
-import csc445.groupc.distauction.Paxos.Messages.Prepare;
-import csc445.groupc.distauction.Paxos.Messages.Promise;
+import csc445.groupc.distauction.Paxos.Messages.*;
 
 import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -83,16 +80,18 @@ public class Acceptor {
 
                     promisedProposalId = proposalId;
                 }
-            } else if (message.equals(ACCEPT_REQUEST)) {
+            } else if (message instanceof AcceptRequest) {
+                final AcceptRequest<GameStep> acceptRequest = (AcceptRequest<GameStep>) message;
+
                 // TODO: Update to work with actual messages
-                final int proposalId = 5;
-                final GameStep value = new GameStep();
+                final int proposalId = acceptRequest.getProposalID();
+                final GameStep value = acceptRequest.getProposalValue();
 
                 if (!proposalIsObsolete(proposalId)) {
                     acceptedValue = Optional.of(value);
 
-                    sendAcceptToProposer(proposalId);
-                    sendAcceptToAllLearners(proposalId);
+                    sendAcceptToProposer(proposalId, value);
+                    sendAcceptToAllLearners(proposalId, value);
                 }
             }
         }
@@ -129,12 +128,21 @@ public class Acceptor {
         sendQueue.put(promise);
     }
 
-    private void sendAcceptToProposer(final int proposalId) {
-        // TODO: Implement
+    private void sendAcceptToProposer(final int proposalId, final GameStep value) throws InterruptedException {
+        final int recipient = Proposer.computeNodeId(proposalId, numNodes);
+        final Accept<GameStep> accept = new Accept<>(proposalId, value, Optional.of(recipient), PaxosMessage.PROPOSER);
+
+        System.out.println(this + " sent " + accept);
+
+        sendQueue.put(accept);
     }
 
-    private void sendAcceptToAllLearners(final int proposalId) {
-        // TODO: Implement
+    private void sendAcceptToAllLearners(final int proposalId, final GameStep value) throws InterruptedException {
+        final Accept<GameStep> accept = new Accept<>(proposalId, value, PaxosMessage.EVERYONE, PaxosMessage.LEARNER);
+
+        System.out.println(this + " sent " + accept);
+
+        sendQueue.put(accept);
     }
 
     @Override

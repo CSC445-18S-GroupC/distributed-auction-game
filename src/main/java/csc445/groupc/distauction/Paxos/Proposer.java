@@ -56,10 +56,10 @@ public class Proposer {
     /**
      * The number of promises received from Acceptors for the last proposal made.
      */
-    private int lastProposalPromises;
-    private int lastProposalAccepts;
+    private int lastProposalPromises;   // TODO: Change to HashMap
+    private int lastProposalAccepts;    // TODO: Change to HashMap
 
-    private boolean reachedPromiseMajority;
+    private boolean reachedPromiseMajority;     // TODO: Change to HashMap (?)
     private boolean reachedAcceptMajority;
 
     public Proposer(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue,
@@ -123,15 +123,19 @@ public class Proposer {
                         sendAcceptRequestToAllAcceptors(lastProposalId, newestProposalValue.get());
                     }
                 }
-            } else if (message.equals(ACCEPT)) {
-                // TODO: Update to work with actual messages
+            } else if (message instanceof Accept) {
+                final Accept<GameStep> accept = (Accept<GameStep>) message;
 
+                // TODO: Add a condition to check if the received promise is for the latest proposal (?)
                 final boolean isLastProposal = true;
                 if (!reachedAcceptMajority && isLastProposal) {
                     ++lastProposalAccepts;
 
+                    System.out.println(this + " acceptances " + lastProposalAccepts + "/" + majority);
                     if (lastProposalAccepts >= majority) {
                         reachedAcceptMajority = true;
+
+                        System.out.println(this + " reached majority on " + accept.getProposalValue());
                     }
                 }
             }
