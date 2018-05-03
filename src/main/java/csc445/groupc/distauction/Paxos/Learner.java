@@ -1,6 +1,7 @@
 package csc445.groupc.distauction.Paxos;
 
-import csc445.groupc.distauction.GameStep;
+import csc445.groupc.distauction.GameLogic.GameState2;
+import csc445.groupc.distauction.GameLogic.GameStep;
 import csc445.groupc.distauction.Paxos.Messages.*;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Created by chris on 4/28/18.
  */
 public class Learner {
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private static final long TIMEOUT = 10;
     private static final TimeUnit TIMEOUT_UNIT = TimeUnit.MILLISECONDS;
@@ -54,8 +55,9 @@ public class Learner {
     private final AtomicInteger largestKnownRound;
 
     private final ArrayList<GameStep> log;
+    private final GameState2 gameState;
 
-    public Learner(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue, final Proposer proposer, final Acceptor acceptor, final AtomicInteger largestKnownRound) {
+    public Learner(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue, final Proposer proposer, final Acceptor acceptor, final AtomicInteger largestKnownRound, final GameState2 gameState) {
         this.numNodes = numNodes;
         this.majority = (numNodes / 2) + 1;
 
@@ -74,6 +76,7 @@ public class Learner {
         this.largestKnownRound = largestKnownRound;
 
         this.log = new ArrayList<>();
+        this.gameState = gameState;
     }
 
     public void run() throws InterruptedException {
@@ -128,7 +131,7 @@ public class Learner {
                     final int entryId = update.getEntryId();
                     final GameStep value = update.getValue();
 
-                    System.out.println(this + " processed update " + update);
+                    if (DEBUG) System.out.println(this + " processed update " + update);
 
                     if (entryId == paxosRound) {
                         consensus(value);
@@ -183,7 +186,9 @@ public class Learner {
 
         log.add(value);
 
-        // TODO: Finish implementing (apply to Game State)
+        gameState.applyStep(value);
+
+        System.out.println(this + " achieved game state " + gameState);
     }
 
     private boolean messageFromDifferentRound(final Message message) {

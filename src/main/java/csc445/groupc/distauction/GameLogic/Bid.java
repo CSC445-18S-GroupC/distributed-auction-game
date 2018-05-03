@@ -1,11 +1,11 @@
-package csc445.groupc.distauction;
+package csc445.groupc.distauction.GameLogic;
 
 /**
  * Represents a bid in the game.
  *
  * Created by chris on 4/17/18.
  */
-public class Bid {
+public class Bid extends GameStep {
     private final String bidder;
     private final float bidAmount;
 
@@ -25,5 +25,10 @@ public class Bid {
      */
     public String getBidder() {
         return bidder;
+    }
+
+    @Override
+    public String toString() {
+        return "Bid(bidder = " + bidder + ", bidAmount = " + bidAmount + ")";
     }
 }

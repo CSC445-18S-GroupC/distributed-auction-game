@@ -1,6 +1,6 @@
 package csc445.groupc.distauction.Paxos;
 
-import csc445.groupc.distauction.GameStep;
+import csc445.groupc.distauction.GameLogic.GameStep;
 import csc445.groupc.distauction.Paxos.Messages.*;
 
 import java.util.Optional;
@@ -13,7 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Created by chris on 4/28/18.
  */
 public class Acceptor {
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private final LinkedBlockingQueue<Message> messageQueue;
     private final LinkedBlockingQueue<Message> sendQueue;

@@ -14,8 +14,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  * packet drops or odd behaviour with multicast.
  */
 public class MulticastSimulator {
-    private static final boolean DEBUG = true;
-    private static final Optional<Integer> DROP_CHANCE = Optional.of(10);
+    private static final boolean DEBUG = false;
+    private static final Optional<Integer> DROP_CHANCE = Optional.empty();//Optional.of(10);
 
     private final List<LinkedBlockingQueue<Message>> sendingQueues;
     private final List<LinkedBlockingQueue<Message>> receivingQueues;

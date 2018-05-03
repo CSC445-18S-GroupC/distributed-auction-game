@@ -1,5 +1,7 @@
 package csc445.groupc.distauction;
 
+import csc445.groupc.distauction.GameLogic.Bid;
+import csc445.groupc.distauction.GameLogic.GameState;
 import org.junit.Test;
 
 import java.time.LocalDateTime;

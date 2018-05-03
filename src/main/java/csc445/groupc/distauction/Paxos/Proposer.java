@@ -1,6 +1,6 @@
 package csc445.groupc.distauction.Paxos;
 
-import csc445.groupc.distauction.GameStep;
+import csc445.groupc.distauction.GameLogic.GameStep;
 import csc445.groupc.distauction.Paxos.Messages.*;
 
 import java.util.HashMap;
@@ -16,7 +16,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Created by chris on 4/23/18.
  */
 public class Proposer {
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private static final long TIMEOUT = 1000;
     private static final long TIMEOUT_VARIATION = 100;

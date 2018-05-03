@@ -5,7 +5,7 @@
  */
 package csc445.groupc.distauction.Paxos.Messages;
 
-import csc445.groupc.distauction.GameStep;
+import csc445.groupc.distauction.GameLogic.GameStep;
 
 /**
  *

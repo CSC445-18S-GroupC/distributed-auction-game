@@ -1,4 +1,4 @@
-package csc445.groupc.distauction;
+package csc445.groupc.distauction.GameLogic;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
