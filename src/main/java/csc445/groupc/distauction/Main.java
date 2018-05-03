@@ -42,7 +42,9 @@ public class Main {
         for (int i = 0; i < numNodes; i++) {
             final int id = i;
             final AtomicInteger largestKnownRound = new AtomicInteger(0);
-            final GameState2 gameState = new GameState2(LocalDateTime.now(), players);
+            final GameState2 gameState = new GameState2(LocalDateTime.now(), players, (gs) -> {
+                System.out.println(gs);
+            });
 
             final LinkedBlockingQueue<Message> sendQueue = new LinkedBlockingQueue<>();
             final LinkedBlockingQueue<Message> receivingQueue = new LinkedBlockingQueue<>();

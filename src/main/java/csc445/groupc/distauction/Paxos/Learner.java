@@ -188,7 +188,7 @@ public class Learner {
 
         gameState.applyStep(value);
 
-        System.out.println(this + " achieved game state " + gameState);
+        if (DEBUG) System.out.println(this + " achieved game state " + gameState);
     }
 
     private boolean messageFromDifferentRound(final Message message) {

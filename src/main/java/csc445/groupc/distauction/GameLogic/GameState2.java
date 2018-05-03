@@ -6,6 +6,7 @@ import java.time.temporal.TemporalUnit;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.Random;
+import java.util.function.Consumer;
 
 /**
  * Created by chris on 5/2/18.
@@ -60,6 +61,7 @@ public class GameState2 {
 
     private Optional<Bid> topBid;
     private float amount;
+    private final Consumer<GameState2> updateFunction;
 
     /**
      * Creates a new game object.
@@ -67,9 +69,10 @@ public class GameState2 {
      * @param currentTime The current time.
      * @param players The usernames of the players.
      */
-    public GameState2(final LocalDateTime currentTime, final String[] players) {
+    public GameState2(final LocalDateTime currentTime, final String[] players, final Consumer<GameState2> updateFunction) {
         this.round = 1;
         this.playerScores = new HashMap<>();
+        this.updateFunction = updateFunction;
 
         this.random = new Random();
         this.roundStartTime = currentTime;
@@ -80,6 +83,18 @@ public class GameState2 {
         for (final String p : players) {
             this.playerScores.put(p, STARTING_SCORE);
         }
+    }
+
+    public HashMap<String, Integer> getPlayerScores() {
+        return (HashMap<String, Integer>) playerScores.clone();
+    }
+
+    public Optional<Bid> getMostRecentBid() {
+        return topBid;
+    }
+
+    private void onUpdate() {
+        updateFunction.accept(this);
     }
 
     public Bid generateRandomBid(final String bidder) {
@@ -95,7 +110,7 @@ public class GameState2 {
             applyTimeout();
         }
 
-        // TODO: Call onUpdate
+        onUpdate();
     }
 
     private void applyBid(final Bid bid) {
@@ -103,10 +118,8 @@ public class GameState2 {
             topBid = Optional.of(bid);
             amount += bid.getBidAmount();
 
-            System.out.println("amount = " + amount);
 
             if (amount >= ROUND_WIN_BID_AMOUNT) {
-                System.out.println("new round");
 
                 updatePlayerScores(WINNING_BID_LEADER_SCORE_CHANGE, WINNING_BID_LOSER_SCORE_CHANGE);
 
@@ -122,13 +135,10 @@ public class GameState2 {
     }
 
     private void updatePlayerScores(final int leaderChange, final int loserChange) {
-        System.out.println("start updating");
         final Optional<String> leadingPlayer = topBid.map(Bid::getBidder);
 
-        System.out.println(leadingPlayer.get());
         leadingPlayer.map(p -> playerScores.put(p, playerScores.get(p) + leaderChange));
 
-        System.out.println(2);
         playerScores.keySet().stream()
                 .filter(p -> !(leadingPlayer.isPresent() && p.equals(leadingPlayer.get())))
                 .forEach(p -> playerScores.put(p, playerScores.get(p) + loserChange));
