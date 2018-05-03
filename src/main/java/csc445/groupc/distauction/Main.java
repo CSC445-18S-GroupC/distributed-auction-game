@@ -3,7 +3,7 @@ package csc445.groupc.distauction;
 import csc445.groupc.distauction.Communication.MessageForwarding;
 import csc445.groupc.distauction.Communication.MulticastSimulator;
 import csc445.groupc.distauction.GameLogic.Bid;
-import csc445.groupc.distauction.GameLogic.GameState2;
+import csc445.groupc.distauction.GameLogic.GameState;
 import csc445.groupc.distauction.Paxos.Acceptor;
 import csc445.groupc.distauction.Paxos.Learner;
 import csc445.groupc.distauction.Paxos.Messages.Message;
@@ -42,7 +42,7 @@ public class Main {
         for (int i = 0; i < numNodes; i++) {
             final int id = i;
             final AtomicInteger largestKnownRound = new AtomicInteger(0);
-            final GameState2 gameState = new GameState2(LocalDateTime.now(), players, (gs) -> {
+            final GameState gameState = new GameState(LocalDateTime.now(), players, (gs) -> {
                 System.out.println(gs);
             });
 

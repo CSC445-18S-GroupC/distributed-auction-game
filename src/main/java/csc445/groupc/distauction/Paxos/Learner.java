@@ -1,6 +1,6 @@
 package csc445.groupc.distauction.Paxos;
 
-import csc445.groupc.distauction.GameLogic.GameState2;
+import csc445.groupc.distauction.GameLogic.GameState;
 import csc445.groupc.distauction.GameLogic.GameStep;
 import csc445.groupc.distauction.Paxos.Messages.*;
 
@@ -55,9 +55,9 @@ public class Learner {
     private final AtomicInteger largestKnownRound;
 
     private final ArrayList<GameStep> log;
-    private final GameState2 gameState;
+    private final GameState gameState;
 
-    public Learner(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue, final Proposer proposer, final Acceptor acceptor, final AtomicInteger largestKnownRound, final GameState2 gameState) {
+    public Learner(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue, final Proposer proposer, final Acceptor acceptor, final AtomicInteger largestKnownRound, final GameState gameState) {
         this.numNodes = numNodes;
         this.majority = (numNodes / 2) + 1;
 
