@@ -118,23 +118,21 @@ public class GameState2 {
             topBid = Optional.of(bid);
             amount += bid.getBidAmount();
 
-
             if (amount >= ROUND_WIN_BID_AMOUNT) {
-
-                updatePlayerScores(WINNING_BID_LEADER_SCORE_CHANGE, WINNING_BID_LOSER_SCORE_CHANGE);
-
-                ++round;
-                topBid = Optional.empty();
-                amount = 0;
+                startNextRound(WINNING_BID_LEADER_SCORE_CHANGE, WINNING_BID_LOSER_SCORE_CHANGE);
             }
         }
     }
 
     private void applyTimeout() {
-        // TODO: Implement
+        startNextRound(TIMEOUT_LEADER_SCORE_CHANGE, TIMEOUT_LOSER_SCORE_CHANGE);
     }
 
-    private void updatePlayerScores(final int leaderChange, final int loserChange) {
+    private void startNextRound(final int leaderChange, final int loserChange) {
+        ++round;
+        topBid = Optional.empty();
+        amount = 0;
+
         final Optional<String> leadingPlayer = topBid.map(Bid::getBidder);
 
         leadingPlayer.map(p -> playerScores.put(p, playerScores.get(p) + leaderChange));
