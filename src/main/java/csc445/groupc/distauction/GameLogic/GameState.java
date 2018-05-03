@@ -10,7 +10,23 @@ import java.util.Random;
 import java.util.function.Consumer;
 
 /**
- * Created by chris on 5/2/18.
+ * A GameState object is used to represent the current state of the game. It acts as a deterministic finite state
+ * machine that takes in inputs that are GameSteps in order to change the state of the game. This allows the game state
+ * to be communicated and reconstructed for use in distributed consensus algorithms like Paxos.
+ * <br><br>
+ * Every time the state of the game is changed, the updateFunction, supplied as a parameter to the constructor, is
+ * called in order to allow for the game's UI to be updated to reflect the new state of the game.
+ * <br><br>
+ * <pre>
+ * final GameState gameState = new GameState(LocalDateTime.now(), new String[]{ "Jane", "Alice", "Bob" }, (s) -&gt; {})
+ *
+ * final GameStep bid = gameState.generateRandomBid("Jane");
+ *
+ * gameState.applyStep(bid);
+ *
+ * System.out.println(gameState.getMostRecentBid().get());
+ * System.out.println(gameState);
+ * </pre>
  */
 public class GameState {
     /**
