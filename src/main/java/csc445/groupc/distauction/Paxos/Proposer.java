@@ -22,8 +22,6 @@ public class Proposer<A extends Serializable> {
     private static final long TIMEOUT_VARIATION = 100;
     private static final TimeUnit TIMEOUT_UNIT = TimeUnit.MILLISECONDS;
 
-    private static final int ASSUMED_OUT_OF_DATE = 5;
-
     /**
      * The total number of nodes in the Paxos run.
      */
@@ -115,12 +113,6 @@ public class Proposer<A extends Serializable> {
                     message = new ProposalRequest<>(newestProposalValue.get());
 
                     if (DEBUG) System.out.println(this + " requeued timed-out proposal " + message);
-
-                    if (lastProposalId > ASSUMED_OUT_OF_DATE * numNodes) {
-                        if (DEBUG) System.out.println(this + " assumed it is out of date");
-                        final int prevLargest = largestKnownRound.get();
-                        largestKnownRound.compareAndSet(prevLargest, prevLargest + 1);
-                    }
                 } else {
                     continue;
                 }
