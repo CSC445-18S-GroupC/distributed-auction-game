@@ -3,6 +3,7 @@ package csc445.groupc.distauction;
 import csc445.groupc.distauction.Communication.MulticastSimulator;
 import csc445.groupc.distauction.GameLogic.Bid;
 import csc445.groupc.distauction.GameLogic.GameState;
+import csc445.groupc.distauction.GameLogic.GameStep;
 import csc445.groupc.distauction.Paxos.Messages.Message;
 import csc445.groupc.distauction.Paxos.Paxos;
 
@@ -32,7 +33,7 @@ public class Main {
         });*/
         final List<LinkedBlockingQueue<Message>> allSendingQueues = new ArrayList<>();
         final List<LinkedBlockingQueue<Message>> allReceivingQueues = new ArrayList<>();
-        final List<Paxos> paxosHandlers = new ArrayList<>();
+        final List<Paxos<GameStep>> paxosHandlers = new ArrayList<>();
 
         final String[] players = new String[]{"Hi", "Sally", "Jane"};
         for (int i = 0; i < numNodes; i++) {
@@ -41,7 +42,7 @@ public class Main {
                 System.out.println(gs);
             });
 
-            final Paxos paxos = new Paxos(id, numNodes, gameState);
+            final Paxos<GameStep> paxos = new Paxos<>(id, numNodes, gameState::applyStep);
             paxosHandlers.add(paxos);
 
             paxos.run();

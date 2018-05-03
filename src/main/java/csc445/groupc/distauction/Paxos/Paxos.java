@@ -1,21 +1,21 @@
 package csc445.groupc.distauction.Paxos;
 
 import csc445.groupc.distauction.Communication.MessageForwarding;
-import csc445.groupc.distauction.GameLogic.GameState;
-import csc445.groupc.distauction.GameLogic.GameStep;
 import csc445.groupc.distauction.Paxos.Messages.Message;
 import csc445.groupc.distauction.Paxos.Messages.ProposalRequest;
 
+import java.io.Serializable;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
  * Created by chris on 5/3/18.
  */
-public class Paxos {
+public class Paxos<A extends Serializable> {
     private final int id;
     private final int numNodes;
-    private final GameState gameState;
+    private final Consumer<A> applicationFunction;
 
     private final AtomicInteger largestKnownRound;
 
@@ -26,14 +26,14 @@ public class Paxos {
     private final LinkedBlockingQueue<Message> receiveQueueAcceptor;
     private final LinkedBlockingQueue<Message> receiveQueueLearner;
 
-    private final Proposer proposer;
-    private final Acceptor acceptor;
-    private final Learner learner;
+    private final Proposer<A> proposer;
+    private final Acceptor<A> acceptor;
+    private final Learner<A> learner;
 
-    public Paxos(final int id, final int numNodes, final GameState gameState) {
+    public Paxos(final int id, final int numNodes, final Consumer<A> applicationFunction) {
         this.id = id;
         this.numNodes = numNodes;
-        this.gameState = gameState;
+        this.applicationFunction = applicationFunction;
 
         this.largestKnownRound = new AtomicInteger(0);
 
@@ -44,9 +44,9 @@ public class Paxos {
         this.receiveQueueAcceptor = new LinkedBlockingQueue<>();
         this.receiveQueueLearner = new LinkedBlockingQueue<>();
 
-        this.proposer = new Proposer(numNodes, id, receiveQueueProposer, sendingQueue, largestKnownRound);
-        this.acceptor = new Acceptor(numNodes, id, receiveQueueAcceptor, sendingQueue, largestKnownRound);
-        this.learner = new Learner(numNodes, id, receiveQueueLearner, sendingQueue, proposer, acceptor, largestKnownRound, gameState);
+        this.proposer = new Proposer<>(numNodes, id, receiveQueueProposer, sendingQueue, largestKnownRound);
+        this.acceptor = new Acceptor<>(numNodes, id, receiveQueueAcceptor, sendingQueue, largestKnownRound);
+        this.learner = new Learner<>(numNodes, id, receiveQueueLearner, sendingQueue, proposer, acceptor, largestKnownRound, applicationFunction);
     }
 
     public LinkedBlockingQueue<Message> getSendingQueue() {
@@ -88,8 +88,8 @@ public class Paxos {
         });
     }
 
-    public void proposeStep(final GameStep gameStep) throws InterruptedException {
-        receivingQueue.put(new ProposalRequest(gameStep));
+    public void proposeStep(final A value) throws InterruptedException {
+        receivingQueue.put(new ProposalRequest<>(value));
     }
 
     private static void onThread(final Runnable runnable) {

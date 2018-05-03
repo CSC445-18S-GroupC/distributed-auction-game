@@ -1,8 +1,8 @@
 package csc445.groupc.distauction.Paxos;
 
-import csc445.groupc.distauction.GameLogic.GameStep;
 import csc445.groupc.distauction.Paxos.Messages.*;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Created by chris on 4/23/18.
  */
-public class Proposer {
+public class Proposer<A extends Serializable> {
     private static final boolean DEBUG = false;
 
     private static final long TIMEOUT = 1000;
@@ -56,7 +56,7 @@ public class Proposer {
     /**
      * The value for the newest proposal made.
      */
-    private Optional<GameStep> newestProposalValue;
+    private Optional<A> newestProposalValue;
 
     /**
      * The number of promises received from Acceptors for the last proposal made.
@@ -112,7 +112,7 @@ public class Proposer {
 
             if (message == null) {
                 if (newestProposalValue.isPresent()) {
-                    message = new ProposalRequest(newestProposalValue.get());
+                    message = new ProposalRequest<>(newestProposalValue.get());
 
                     if (DEBUG) System.out.println(this + " requeued timed-out proposal " + message);
 
@@ -136,12 +136,12 @@ public class Proposer {
                 }
 
                 if (message instanceof ProposalRequest) {
-                    final ProposalRequest proposalRequest = (ProposalRequest) message;
+                    final ProposalRequest<A> proposalRequest = (ProposalRequest<A>) message;
 
                     newestProposalValue = Optional.of(proposalRequest.getValue());
                     sendRequestToAllAcceptors(getNextProposalId());
                 } else if (message instanceof Promise) {
-                    final Promise<GameStep> promise = (Promise<GameStep>) message;
+                    final Promise<A> promise = (Promise<A>) message;
                     final int proposalId = promise.getProposalID();
 
                     if (!promiseMajorities.getOrDefault(proposalId, false)) {
@@ -161,7 +161,7 @@ public class Proposer {
                         }
                     }
                 } else if (message instanceof Accept) { // TODO: Is this really needed if Learner will reset rounds?
-                    final Accept<GameStep> accept = (Accept<GameStep>) message;
+                    final Accept<A> accept = (Accept<A>) message;
                     final int proposalId = accept.getProposalID();
 
                     if (!reachedAcceptMajority) {
@@ -211,8 +211,8 @@ public class Proposer {
         sendQueue.put(prepare);
     }
 
-    private void sendAcceptRequestToAllAcceptors(final int proposalId, final GameStep value) throws InterruptedException {
-        final AcceptRequest<GameStep> acceptRequest = new AcceptRequest<>(proposalId, value, PaxosMessage.EVERYONE, PaxosMessage.ACCEPTOR, paxosRound);
+    private void sendAcceptRequestToAllAcceptors(final int proposalId, final A value) throws InterruptedException {
+        final AcceptRequest<A> acceptRequest = new AcceptRequest<>(proposalId, value, PaxosMessage.EVERYONE, PaxosMessage.ACCEPTOR, paxosRound);
 
         if (DEBUG) System.out.println(this + " sent " + acceptRequest);
 

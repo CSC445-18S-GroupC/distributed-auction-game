@@ -5,20 +5,18 @@
  */
 package csc445.groupc.distauction.Paxos.Messages;
 
-import csc445.groupc.distauction.GameLogic.GameStep;
-
 /**
  *
  * @author bolen
  */
-public class ProposalRequest extends Message {
-    final GameStep value;
+public class ProposalRequest<A> extends Message {
+    final A value;
 
-    public ProposalRequest(final GameStep value) {
+    public ProposalRequest(final A value) {
         this.value = value;
     }
 
-    public GameStep getValue() {
+    public A getValue() {
         return value;
     }
 
