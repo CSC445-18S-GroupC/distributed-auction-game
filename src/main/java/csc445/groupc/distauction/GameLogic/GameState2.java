@@ -23,8 +23,8 @@ public class GameState2 {
     private static final float MIN_BID_INCREASE = 0.01f;
 
     /* The amount of time that a game can run for before it times out */
-    private static final float TIMEOUT_LENGTH = 2;
-    private static final TemporalUnit TIMEOUT_UNIT = ChronoUnit.MINUTES;
+    public static final float TIMEOUT_LENGTH = 2;
+    public static final TemporalUnit TIMEOUT_UNIT = ChronoUnit.MINUTES;
 
     /* Player score change amounts associated with the different game end types */
     private static final int WINNING_BID_LEADER_SCORE_CHANGE = 100;
@@ -59,15 +59,28 @@ public class GameState2 {
      */
     private final Random random;
 
+    /**
+     * The most recent bud placed by a player.
+     */
     private Optional<Bid> topBid;
+
+    /**
+     * The money amount that the bidding is currently up to.
+     */
     private float amount;
+
+    /**
+     * The function that is called whenever the game state is updated. For example, this can be used to update a GUI
+     * display for the game whenever the state changes.
+     */
     private final Consumer<GameState2> updateFunction;
 
     /**
-     * Creates a new game object.
+     * Creates a new game state object.
      *
      * @param currentTime The current time.
      * @param players The usernames of the players.
+     * @param updateFunction A function to call whenever the game state is changed.
      */
     public GameState2(final LocalDateTime currentTime, final String[] players, final Consumer<GameState2> updateFunction) {
         this.round = 1;
@@ -85,10 +98,21 @@ public class GameState2 {
         }
     }
 
+    /**
+     * Returns a copy of the scores of all of the players in the game.
+     *
+     * @return The scores of the players.
+     */
     public HashMap<String, Integer> getPlayerScores() {
         return (HashMap<String, Integer>) playerScores.clone();
     }
 
+    /**
+     * Returns the most recent bid successfully placed by a player, if any.
+     *
+     * @return The most recent bid. If no bid has been made yet, then an empty
+     * Optional is returned.
+     */
     public Optional<Bid> getMostRecentBid() {
         return topBid;
     }
@@ -97,12 +121,23 @@ public class GameState2 {
         updateFunction.accept(this);
     }
 
+    /**
+     * Generates a Bid object for the given player. Uses a randomly selected bid amount.
+     *
+     * @param bidder The player to create a Bid for.
+     * @return The created Bid.
+     */
     public Bid generateRandomBid(final String bidder) {
         final float increase = random.nextFloat() * (MAX_BID_INCREASE - MIN_BID_INCREASE) + MIN_BID_INCREASE;
 
         return new Bid(bidder, increase);
     }
 
+    /**
+     * Applies the given GameStep to alter the game state accordingly.
+     *
+     * @param gameStep The game step to apply.
+     */
     public void applyStep(final GameStep gameStep) {
         if (gameStep instanceof Bid) {
             applyBid((Bid) gameStep);
