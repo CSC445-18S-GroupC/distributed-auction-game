@@ -174,10 +174,6 @@ public class GameState {
     }
 
     private void startNextRound(final int leaderChange, final int loserChange) {
-        ++round;
-        topBid = Optional.empty();
-        amount = 0;
-
         final Optional<String> leadingPlayer = topBid.map(Bid::getBidder);
 
         leadingPlayer.map(p -> playerScores.put(p, playerScores.get(p) + leaderChange));
@@ -185,6 +181,10 @@ public class GameState {
         playerScores.keySet().stream()
                 .filter(p -> !(leadingPlayer.isPresent() && p.equals(leadingPlayer.get())))
                 .forEach(p -> playerScores.put(p, playerScores.get(p) + loserChange));
+
+        ++round;
+        topBid = Optional.empty();
+        amount = 0;
     }
 
     @Override
