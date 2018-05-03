@@ -21,6 +21,8 @@ public class Learner<A extends Serializable> {
     private static final long TIMEOUT = 10;
     private static final TimeUnit TIMEOUT_UNIT = TimeUnit.MILLISECONDS;
 
+    private static final int UPDATE_CHECK_POINT = 100;
+
     /**
      * The total number of nodes in the Paxos run.
      */
@@ -57,6 +59,8 @@ public class Learner<A extends Serializable> {
     private final ArrayList<A> log;
     private final Consumer<A> appicationFunction;
 
+    private int updateWaitCount;
+
     public Learner(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue, final LinkedBlockingQueue<Message> sendQueue, final Proposer proposer, final Acceptor acceptor, final AtomicInteger largestKnownRound, final Consumer<A> appicationFunction) {
         this.numNodes = numNodes;
         this.majority = (numNodes / 2) + 1;
@@ -77,6 +81,8 @@ public class Learner<A extends Serializable> {
 
         this.log = new ArrayList<>();
         this.appicationFunction = appicationFunction;
+
+        this.updateWaitCount = 0;
     }
 
     public void run() throws InterruptedException {
@@ -85,8 +91,11 @@ public class Learner<A extends Serializable> {
         while (running.get()) {
             final Message message = messageQueue.poll(TIMEOUT, TIMEOUT_UNIT);
 
-            if (largestKnownRound.get() > paxosRound) {
+            if (largestKnownRound.get() > paxosRound || updateWaitCount > UPDATE_CHECK_POINT) {
                 sendUpdateRequestToAllLearners(paxosRound);
+                updateWaitCount = 0;
+            } else {
+                ++updateWaitCount;
             }
 
             if (message == null) {
