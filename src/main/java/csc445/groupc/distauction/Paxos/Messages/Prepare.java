@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.ByteBuffer;
 import java.util.Optional;
 
 /**
@@ -17,9 +18,6 @@ import java.util.Optional;
  * @author bolen
  */
 public class Prepare extends PaxosMessage {
-    
-    private static final byte PREPARE_OPCODE = 0;
-    byte receiver;
     private final int proposalID;
     
     public Prepare(final int proposalID, final Optional<Integer> receiver, final byte receiverRole, final int paxosRound){
@@ -31,38 +29,58 @@ public class Prepare extends PaxosMessage {
     public int getProposalID(){
         return this.proposalID;
     }
-    
-    public byte[] toByteArray(){
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out;
-        try {
-            out = new ObjectOutputStream(bos);
-            out.writeObject(this);
-            out.flush();
-            out.close();
-            bos.close();
-        } catch (IOException ex) {
-            System.out.println(ex.toString());
+
+    public byte[] toByteArray() throws IOException {
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES * 4 + Byte.BYTES);
+
+        byteBuffer.putInt(PREPARE_OP);
+        byteBuffer.putInt(proposalID);
+
+        if (receiver.isPresent()) {
+            byteBuffer.putInt(receiver.get());
+        } else {
+            byteBuffer.putInt(EVERYONE_RECEIVES);
         }
-        return bos.toByteArray();
+
+        byteBuffer.put(receiverRole);
+        byteBuffer.putInt(paxosRound);
+
+        return byteBuffer.array();
     }
-    
-    public static Prepare fromByteArray(byte[] array){
-        Prepare prepare = null;
-        try{
-            ByteArrayInputStream bis = new ByteArrayInputStream(array);
-            ObjectInputStream in = new ObjectInputStream(bis);
-            prepare = (Prepare)in.readObject();
-            in.close();
-            bis.close();
-        }catch(IOException | ClassNotFoundException ex){
-            System.out.println(ex.toString());
-        }
-        return prepare;
+
+    public static Prepare fromByteArray(final byte[] bytes) throws IOException {
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(bytes.length);
+
+        byteBuffer.put(bytes);
+        byteBuffer.rewind();
+
+        byteBuffer.getInt();     // Move past OP code
+
+        final int proposalId = byteBuffer.getInt();
+        final int possibleReceiver = byteBuffer.getInt();
+        final byte receiverRole = byteBuffer.get();
+        final int paxosRound = byteBuffer.getInt();
+
+        final Optional<Integer> receiver = (possibleReceiver != EVERYONE_RECEIVES) ? Optional.of(possibleReceiver) : Optional.empty();
+
+        return new Prepare(proposalId, receiver, receiverRole, paxosRound);
     }
 
     @Override
     public String toString() {
         return "Prepare(" + "proposalId = " + proposalID + super.toString() + ")";
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o instanceof Prepare) {
+            final Prepare other = (Prepare) o;
+
+            return this.proposalID == other.proposalID &&
+                    this.receiver.equals(other.receiver) &&
+                    this.receiverRole == other.receiverRole &&
+                    this.paxosRound == other.paxosRound;
+        }
+        return false;
     }
 }

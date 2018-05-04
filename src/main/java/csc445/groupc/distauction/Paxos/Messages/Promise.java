@@ -140,7 +140,8 @@ public class Promise<A extends Serializable> extends PaxosMessage {
                     this.acceptedID.equals(other.acceptedID) &&
                     this.acceptedValue.equals(other.acceptedValue) &&
                     this.receiver.equals(other.receiver) &&
-                    this.receiverRole == other.receiverRole;
+                    this.receiverRole == other.receiverRole &&
+                    this.paxosRound == other.paxosRound;
         }
         return false;
     }
