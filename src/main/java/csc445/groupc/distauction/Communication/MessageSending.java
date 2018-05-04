@@ -1,4 +1,4 @@
-package csc445.groupc.distauction;
+package csc445.groupc.distauction.Communication;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
