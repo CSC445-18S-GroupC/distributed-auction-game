@@ -13,11 +13,13 @@ import java.util.Optional;
 public class Update<A extends Serializable> extends PaxosMessage {
     private final int entryId;
     private final A value;
+    private final int mostRecentRound;
 
-    public Update(final int entryId, final A value, final Optional<Integer> receiver, final byte receiverRole) {
+    public Update(final int entryId, final A value, final int mostRecentRound, final Optional<Integer> receiver, final byte receiverRole) {
         super(receiver, receiverRole, NO_SPECIFIC_ROUND);
         this.entryId = entryId;
         this.value = value;
+        this.mostRecentRound = mostRecentRound;
     }
 
     public int getEntryId() {
@@ -28,19 +30,24 @@ public class Update<A extends Serializable> extends PaxosMessage {
         return value;
     }
 
+    public int getMostRecentRound() {
+        return mostRecentRound;
+    }
+
     @Override
     public String toString() {
-        return "Update(entryId = " + entryId + ", value = " + value + super.toString() + ")";
+        return "Update(entryId = " + entryId + ", value = " + value + ", mostRecentRound = " + mostRecentRound + super.toString() + ")";
     }
 
     @Override
     public byte[] toByteArray() throws IOException {
         final byte[] valueBytes = objectToBytes(value);
 
-        final ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES * 3 + Byte.BYTES + valueBytes.length);
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES * 4 + Byte.BYTES + valueBytes.length);
 
         byteBuffer.putInt(UPDATE_OP);
         byteBuffer.putInt(entryId);
+        byteBuffer.putInt(mostRecentRound);
 
         if (receiver.isPresent()) {
             byteBuffer.putInt(receiver.get());
@@ -64,6 +71,7 @@ public class Update<A extends Serializable> extends PaxosMessage {
         byteBuffer.getInt();     // Move past OP code
 
         final int entryId = byteBuffer.getInt();
+        final int mostRecentRound = byteBuffer.getInt();
         final int possibleReceiver = byteBuffer.getInt();
         final byte receiverRole = byteBuffer.get();
 
@@ -72,7 +80,7 @@ public class Update<A extends Serializable> extends PaxosMessage {
 
         final Optional<Integer> receiver = (possibleReceiver != EVERYONE_RECEIVES) ? Optional.of(possibleReceiver) : Optional.empty();
 
-        return new Update<>(entryId, value, receiver, receiverRole);
+        return new Update<>(entryId, value, mostRecentRound, receiver, receiverRole);
     }
 
     @Override
@@ -82,6 +90,7 @@ public class Update<A extends Serializable> extends PaxosMessage {
 
             return this.entryId == other.entryId &&
                     this.value.equals(other.value) &&
+                    this.mostRecentRound == other.mostRecentRound &&
                     this.receiver.equals(other.receiver) &&
                     this.receiverRole == other.receiverRole;
         }

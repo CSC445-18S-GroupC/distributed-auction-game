@@ -85,7 +85,7 @@ public class PaxosMessageTest {
 
     @Test
     public void updateToFromBytes() throws IOException, ClassNotFoundException {
-        final PaxosMessage initial = new Update<>(25, 9, Optional.of(1), PaxosMessage.PROPOSER);
+        final PaxosMessage initial = new Update<>(25, 9, 2, Optional.of(1), PaxosMessage.PROPOSER);
 
         final byte[] encoded = initial.toByteArray();
 

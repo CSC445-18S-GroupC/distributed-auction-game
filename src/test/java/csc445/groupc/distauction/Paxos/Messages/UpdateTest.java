@@ -13,7 +13,7 @@ import static junit.framework.TestCase.assertEquals;
 public class UpdateTest {
     @Test
     public void toFromBytesEveryone() throws IOException, ClassNotFoundException {
-        final Update<Integer> initial = new Update<>(25, 9, Optional.empty(), PaxosMessage.PROPOSER);
+        final Update<Integer> initial = new Update<>(25, 9, 2, Optional.empty(), PaxosMessage.PROPOSER);
 
         final byte[] encoded = initial.toByteArray();
 
@@ -24,7 +24,7 @@ public class UpdateTest {
 
     @Test
     public void toFromBytes() throws IOException, ClassNotFoundException {
-        final Update<Integer> initial = new Update<>(25, 9, Optional.of(1), PaxosMessage.PROPOSER);
+        final Update<Integer> initial = new Update<>(25, 9, 2, Optional.of(1), PaxosMessage.PROPOSER);
 
         final byte[] encoded = initial.toByteArray();
 

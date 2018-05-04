@@ -134,11 +134,17 @@ public class Learner<A extends Serializable> {
                     final Update<A> update = (Update<A>) message;
                     final int entryId = update.getEntryId();
                     final A value = update.getValue();
+                    final int mostRecentRound = update.getMostRecentRound();
 
                     if (DEBUG) System.out.println(this + " processed update " + update);
 
                     if (entryId == paxosRound) {
                         consensus(value);
+
+                        final int prevLargest = largestKnownRound.get();
+                        if (mostRecentRound > prevLargest) {
+                            largestKnownRound.compareAndSet(prevLargest, mostRecentRound);
+                        }
                     }
                 }
             } finally {
@@ -160,7 +166,7 @@ public class Learner<A extends Serializable> {
     }
 
     private void sendValueToBehindLearners(final int entryId, final A value) throws InterruptedException {
-        final Update<A> update = new Update<>(entryId, value, PaxosMessage.EVERYONE, PaxosMessage.LEARNER);
+        final Update<A> update = new Update<>(entryId, value, paxosRound, PaxosMessage.EVERYONE, PaxosMessage.LEARNER);
 
         if (DEBUG) System.out.println(this + " sent " + update);
 
