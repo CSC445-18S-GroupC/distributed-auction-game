@@ -61,7 +61,7 @@ public class HostView {
             System.out.println("Play");
             server.interrupt();
 
-            LoginView.frame.setContentPane(new GameView(usernames, id).mainPanel);
+            LoginView.frame.setContentPane(new GameView(usernames, id, HostServer.multicastAddr).mainPanel);
             LoginView.frame.pack();
             startSignal.countDown();
         }

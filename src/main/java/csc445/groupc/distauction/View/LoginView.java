@@ -42,7 +42,7 @@ public class LoginView {
 
 
 
-    public static void main(String[] args) {
+    public static void main() {
         frame = new JFrame("BidGame");
         frame.setContentPane(new LoginView().loginPanel);
         frame.setLocationRelativeTo(null);

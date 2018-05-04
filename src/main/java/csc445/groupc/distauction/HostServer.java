@@ -16,7 +16,7 @@ public class HostServer implements Runnable {
     private final Socket m_socket;
     private final int m_num;
     private final CountDownLatch startSignal;
-    private static final String multicastAddr = "230.1.1.1";
+    public static final String multicastAddr = "230.1.1.1";
     private HostView hostView;
 
     public HostServer(Socket socket, int num, CountDownLatch startSignal, HostView hostView) {
@@ -62,6 +62,10 @@ public class HostServer implements Runnable {
         } catch (IOException e) {
             System.out.println(m_num + " Error: " + e.toString());
         }
+    }
+
+    public String getMulticast(){
+        return multicastAddr;
     }
 
     public static void main(String[] args) throws Exception {

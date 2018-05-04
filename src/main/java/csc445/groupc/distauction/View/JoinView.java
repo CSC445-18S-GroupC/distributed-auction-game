@@ -34,7 +34,8 @@ public class JoinView {
                 HostClient clientConnection = new HostClient(hostIP, hostPort);
                 clientConnection.join(username);
 
-                LoginView.frame.setContentPane(new GameView(clientConnection.getUsers(), clientConnection.getUsers().indexOf(username)).mainPanel);
+                LoginView.frame.setContentPane(new GameView(clientConnection.getUsers(),
+                        clientConnection.getUsers().indexOf(username), clientConnection.getMulticastAddr()).mainPanel);
                 LoginView.frame.pack();
             }
         }

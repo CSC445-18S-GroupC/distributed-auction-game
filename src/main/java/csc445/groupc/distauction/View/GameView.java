@@ -1,5 +1,7 @@
 package csc445.groupc.distauction.View;
 
+import csc445.groupc.distauction.Communication.MessageReceiving;
+import csc445.groupc.distauction.Communication.MessageSending;
 import csc445.groupc.distauction.GameLogic.Bid;
 import csc445.groupc.distauction.GameLogic.GameState;
 import csc445.groupc.distauction.GameLogic.GameStep;
@@ -21,7 +23,7 @@ public class GameView {
     public JPanel mainPanel;
     private GameState gameState;
 
-    public GameView(ArrayList<String> usernames, int id) {
+    public GameView(ArrayList<String> usernames, int id, String multicastAddr) {
         String[] players = usernames.toArray(new String[0]);
         gameState = new GameState(LocalDateTime.now(), players, (gs) -> {
             System.out.println(gs);
@@ -34,6 +36,21 @@ public class GameView {
             gameState.applyStep(s);
         });
         paxos.run();
+
+        onThread(() -> {
+            try {
+                MessageReceiving.run(multicastAddr, 5353, paxos.getReceivingQueue());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        onThread(() -> {
+            try {
+                MessageSending.run(multicastAddr, 5354, 5353, paxos.getSendingQueue());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
 
         bidButton.addActionListener(new ActionListener() {
             @Override
@@ -84,6 +101,10 @@ public class GameView {
             bidLabel.setText("$0");
         }
 
+    }
+
+    private static void onThread(final Runnable runnable) {
+        new Thread(runnable).start();
     }
 
 
