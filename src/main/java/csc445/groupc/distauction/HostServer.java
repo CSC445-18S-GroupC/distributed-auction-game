@@ -1,5 +1,7 @@
 package csc445.groupc.distauction;
 
+import csc445.groupc.distauction.View.HostView;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -15,12 +17,13 @@ public class HostServer implements Runnable {
     private final int m_num;
     private final CountDownLatch startSignal;
     private static final String multicastAddr = "230.1.1.1";
-    private static ArrayList<String> usernames;
+    private HostView hostView;
 
-    HostServer(Socket socket, int num, CountDownLatch startSignal) {
+    public HostServer(Socket socket, int num, CountDownLatch startSignal, HostView hostView) {
         this.m_socket = socket;
         this.m_num = num;
         this.startSignal = startSignal;
+        this.hostView = hostView;
 
         Thread handler = new Thread(this, "handler-" + m_num);
         handler.start();
@@ -37,7 +40,7 @@ public class HostServer implements Runnable {
                 String username = in.readLine();
                 System.out.println(username + " connected");
 
-                usernames.add(username);
+                hostView.addUser(username);
 
                 //Send back multicast address
                 outputStream.writeObject(multicastAddr);
@@ -50,7 +53,7 @@ public class HostServer implements Runnable {
                 }
 
                 //send out all usernames
-                outputStream.writeObject(usernames);
+                outputStream.writeObject(hostView.getUsernames());
 
 
             } finally {
@@ -63,7 +66,7 @@ public class HostServer implements Runnable {
 
     public static void main(String[] args) throws Exception {
         int port = 9000;
-        usernames = new ArrayList<>();
+        //usernames = new ArrayList<>();
         if (args.length > 0) {
             port = Integer.parseInt(args[0]);
         }
@@ -73,7 +76,7 @@ public class HostServer implements Runnable {
         ServerSocket serverSocket = new ServerSocket(port);
         while (true) {
             Socket socket = serverSocket.accept();
-            new HostServer(socket, nextNum++, startSignal);
+            //new HostServer(socket, nextNum++, startSignal);
         }
     }
 }
