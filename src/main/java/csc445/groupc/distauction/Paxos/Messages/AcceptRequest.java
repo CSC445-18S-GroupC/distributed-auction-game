@@ -15,9 +15,6 @@ import java.util.Optional;
  * @author bolen
  */
 public class AcceptRequest<A extends Serializable> extends PaxosMessage {
-    
-    private static final byte ACCEPTREQUEST_OPCODE = 3;
-
     private final int proposalID;
     private final A proposalValue;
     
@@ -36,12 +33,13 @@ public class AcceptRequest<A extends Serializable> extends PaxosMessage {
         return this.proposalValue;
     }
 
+    @Override
     public byte[] toByteArray() throws IOException {
         final byte[] valueBytes = objectToBytes(proposalValue);
 
         final ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES * 4 + Byte.BYTES + valueBytes.length);
 
-        byteBuffer.putInt(ACCEPTREQUEST_OPCODE);
+        byteBuffer.putInt(ACCEPT_REQUEST_OP);
         byteBuffer.putInt(proposalID);
 
         if (receiver.isPresent()) {

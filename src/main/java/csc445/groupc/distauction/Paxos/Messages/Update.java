@@ -33,6 +33,7 @@ public class Update<A extends Serializable> extends PaxosMessage {
         return "Update(entryId = " + entryId + ", value = " + value + super.toString() + ")";
     }
 
+    @Override
     public byte[] toByteArray() throws IOException {
         final byte[] valueBytes = objectToBytes(value);
 

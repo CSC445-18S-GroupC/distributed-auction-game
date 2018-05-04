@@ -6,6 +6,7 @@
 package csc445.groupc.distauction.Paxos.Messages;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.util.Optional;
 
 /**
@@ -13,17 +14,6 @@ import java.util.Optional;
  * @author bolen
  */
 public abstract class PaxosMessage extends Message implements Serializable {
-    // from byte array method because you dont know what message it is
-    // read opcode then call correct static method
-//    public static PaxosMessage fromByteArray(byte[] array){
-//        
-//        return null;
-//    }
-    
-    
-    // every subclass has another field in header
-    //
-    
     public static final byte PROPOSER = 0;
     public static final byte ACCEPTOR = 1;
     public static final byte LEARNER = 2;
@@ -84,32 +74,30 @@ public abstract class PaxosMessage extends Message implements Serializable {
         }
     }
 
-    /*public static <A extends Serializable> PaxosMessage fromByteArray(byte[] array) throws IOException, ClassNotFoundException{
-        byte opcode = 3;
-        ByteArrayInputStream bis = new ByteArrayInputStream(array);
-        //ObjectInputStream in = new ObjectInputStream(bis);
-        //opcode = array[17];
-        
-        System.out.println(opcode);
-        //in.close();
-        bis.close();
-        
-        System.out.println();
-        switch(opcode){
-            case 0:
-                return Prepare.fromByteArray(array);
-            case 1:
-                return Promise.fromByteArray(array);
-            case 2:
-                return Promise.fromByteArray(array);
-            case 3:
-                return AcceptRequest.fromByteArray(array);
-            case 4:
-                return Accept.fromByteArray(array);
-            default:
-                return null;
+    public abstract byte[] toByteArray() throws IOException, ClassNotFoundException;
+
+    public static <B extends Serializable> PaxosMessage fromByteArray(byte[] bytes) throws IOException, ClassNotFoundException {
+        final ByteBuffer buffer = ByteBuffer.allocate(bytes.length);
+        buffer.put(bytes);
+        buffer.rewind();
+
+        final int opCode = buffer.getInt();
+
+        if (opCode == PREPARE_OP) {
+            return Prepare.fromByteArray(bytes);
+        } else if (opCode == PROMISE_WITH_OP || opCode == PROMISE_WITHOUT_OP) {
+            return Promise.fromByteArray(bytes);
+        } else if (opCode == ACCEPT_REQUEST_OP) {
+            return AcceptRequest.fromByteArray(bytes);
+        } else if (opCode == ACCEPT_OP) {
+            return Accept.fromByteArray(bytes);
+        } else if (opCode == UPDATE_REQUEST_OP) {
+            return UpdateRequest.fromByteArray(bytes);
+        } else if (opCode == UPDATE_OP) {
+            return Update.fromByteArray(bytes);
         }
-    }*/
+        return null;    // This should not run unless the message bytes have an invalid op code
+    }
 
     @Override
     public String toString() {

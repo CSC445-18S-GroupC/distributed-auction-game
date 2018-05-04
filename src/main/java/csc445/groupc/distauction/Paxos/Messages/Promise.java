@@ -16,9 +16,6 @@ import java.util.Optional;
  * @author bolen
  */
 public class Promise<A extends Serializable> extends PaxosMessage {
-    private static final byte PROMISE_NONACCEPT_OPCODE = 1;
-    private static final byte PROMISE_ACCEPT_OPCODE = 2;
-
     private final Optional<Integer> acceptedID;
     private final Optional<A> acceptedValue;
     private final int proposalID;
@@ -55,6 +52,7 @@ public class Promise<A extends Serializable> extends PaxosMessage {
         return proposalID;
     }
 
+    @Override
     public byte[] toByteArray() throws IOException {
         final int numBytes;
         final byte[] valueBytes;
@@ -74,9 +72,9 @@ public class Promise<A extends Serializable> extends PaxosMessage {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(numBytes);
 
         if (hasAccepted) {
-            byteBuffer.putInt(PROMISE_ACCEPT_OPCODE);
+            byteBuffer.putInt(PROMISE_WITH_OP);
         } else {
-            byteBuffer.putInt(PROMISE_NONACCEPT_OPCODE);
+            byteBuffer.putInt(PROMISE_WITHOUT_OP);
         }
 
         byteBuffer.putInt(proposalID);
@@ -105,7 +103,7 @@ public class Promise<A extends Serializable> extends PaxosMessage {
         byteBuffer.rewind();
 
         final boolean hasAccepted;
-        if (byteBuffer.getInt() == PROMISE_ACCEPT_OPCODE) {
+        if (byteBuffer.getInt() == PROMISE_WITH_OP) {
             hasAccepted = true;
         } else {
             hasAccepted = false;

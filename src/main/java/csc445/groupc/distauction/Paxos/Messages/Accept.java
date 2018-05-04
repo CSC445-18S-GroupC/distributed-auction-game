@@ -33,6 +33,7 @@ public class Accept<A extends Serializable> extends PaxosMessage {
         return this.proposalValue;
     }
 
+    @Override
     public byte[] toByteArray() throws IOException {
         final byte[] valueBytes = objectToBytes(proposalValue);
 

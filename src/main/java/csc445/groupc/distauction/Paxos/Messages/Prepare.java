@@ -30,6 +30,7 @@ public class Prepare extends PaxosMessage {
         return this.proposalID;
     }
 
+    @Override
     public byte[] toByteArray() throws IOException {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES * 4 + Byte.BYTES);
 

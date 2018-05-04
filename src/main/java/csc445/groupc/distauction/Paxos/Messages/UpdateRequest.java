@@ -24,6 +24,7 @@ public class UpdateRequest extends PaxosMessage {
         return "UpdateRequest(entryId = " + entryId + super.toString() + ")";
     }
 
+    @Override
     public byte[] toByteArray() throws IOException {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES * 3 + Byte.BYTES);
 
