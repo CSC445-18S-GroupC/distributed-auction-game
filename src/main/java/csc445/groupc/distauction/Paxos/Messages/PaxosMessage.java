@@ -5,10 +5,7 @@
  */
 package csc445.groupc.distauction.Paxos.Messages;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.util.Optional;
 
 /**
@@ -33,7 +30,17 @@ public abstract class PaxosMessage extends Message implements Serializable {
 
     public static final int NO_SPECIFIC_ROUND = -1;
 
+    protected static final int PREPARE_OP = 0;
+    protected static final int PROMISE_WITHOUT_OP = 1;
+    protected static final int PROMISE_WITH_OP = 2;
+    protected static final int ACCEPT_REQUEST_OP = 3;
+    protected static final int ACCEPT_OP = 4;
+    protected static final int UPDATE_REQUEST_OP = 5;
+    protected static final int UPDATE_OP = 6;
+
     public static final Optional<Integer> EVERYONE = Optional.empty();
+
+    protected static final int EVERYONE_RECEIVES = -1;
 
     protected final Optional<Integer> receiver;
     protected final byte receiverRole;
@@ -107,5 +114,32 @@ public abstract class PaxosMessage extends Message implements Serializable {
     @Override
     public String toString() {
         return ", receiver = " + getReceiverString() + ", receiverRole = " + getReceiverRoleString() + ", paxosRound = " + paxosRound;
+    }
+
+    protected static <B extends Serializable> byte[] objectToBytes(final B object) throws IOException {
+        final ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+        try {
+            final ObjectOutput out = new ObjectOutputStream(byteOut);
+            out.writeObject(object);
+            out.flush();
+
+            return byteOut.toByteArray();
+        } finally {
+            byteOut.close();
+        }
+    }
+
+    protected static <B extends Serializable> B objectFromBytes(final byte[] bytes) throws IOException, ClassNotFoundException {
+        final ByteArrayInputStream byteIn = new ByteArrayInputStream(bytes);
+        try {
+            final ObjectInput in = new ObjectInputStream(byteIn);
+            try {
+                return  (B) in.readObject();
+            } finally {
+                in.close();
+            }
+        } finally {
+            byteIn.close();
+        }
     }
 }
