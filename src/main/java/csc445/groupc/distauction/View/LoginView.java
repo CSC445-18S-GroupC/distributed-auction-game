@@ -5,7 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class LoginView {
-    private static JFrame frame;
+    public static JFrame frame;
     private JPanel loginPanel;
     private JButton hostButton;
     private JButton joinButton;
@@ -27,13 +27,13 @@ public class LoginView {
                 System.out.println("Host Button");
 
                 //switch panel to host
-                frame.setContentPane(new HostView().hostPanel);
+                frame.setContentPane(new HostView(username).hostPanel);
                 frame.pack();
             }else if (e.getSource().equals(joinButton)){
                 System.out.println("Join Button");
 
                 //switch panel to join
-                frame.setContentPane(new JoinView().joinPanel);
+                frame.setContentPane(new JoinView(username).joinPanel);
                 frame.pack();
             }
             System.out.println("Username: " + username);
