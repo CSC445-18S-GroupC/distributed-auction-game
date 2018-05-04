@@ -5,25 +5,20 @@
  */
 package csc445.groupc.distauction.Paxos.Messages;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Optional;
 
 /**
  *
  * @author bolen
  */
-public class Promise<A extends Serializable> extends PaxosMessage { 
-    
+public class Promise<A extends Serializable> extends PaxosMessage {
     private static final byte PROMISE_NONACCEPT_OPCODE = 1;
     private static final byte PROMISE_ACCEPT_OPCODE = 2;
-    byte receiver;
+
     private final Optional<Integer> acceptedID;
     private final Optional<A> acceptedValue;
     private final int proposalID;
@@ -60,61 +55,94 @@ public class Promise<A extends Serializable> extends PaxosMessage {
         return proposalID;
     }
 
-    //don't guess size of value
-    public byte[] toByteArray(){
-        int pID = this.proposalID;
-        ByteBuffer buf = ByteBuffer.allocate(8 + MAX_VALUE_SIZE + 1);
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out;
-        byte[] valueBytes = new byte[MAX_VALUE_SIZE];
-        if (this.acceptedID.isPresent()) {
-            int aID = this.acceptedID.get();
-            A value = this.acceptedValue.get();
-            buf.put(Promise.PROMISE_ACCEPT_OPCODE);
-            buf.putInt(pID);
-            buf.putInt(aID);
-            try {
-                out = new ObjectOutputStream(bos);
-                out.writeObject(value);
-                out.flush();
-                out.close();
-                bos.close();
-                valueBytes = bos.toByteArray();
-            } catch (IOException ex) {
-                System.out.println(ex.toString());
-            }
-            buf.put(valueBytes);
-            return buf.array();
-        }else{
-            buf.put(Promise.PROMISE_NONACCEPT_OPCODE);
-            buf.putInt(pID);
-            return buf.array();
+    public byte[] toByteArray() throws IOException {
+        final int numBytes;
+        final byte[] valueBytes;
+
+        final boolean hasAccepted = hasAcceptedValue();
+
+        if (hasAccepted) {
+            valueBytes = objectToBytes(acceptedValue.get());
+
+            numBytes = Integer.BYTES * 6 + valueBytes.length;
+        } else {
+            valueBytes = new byte[0];
+
+            numBytes = Integer.BYTES * 5;
+        }
+
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(numBytes);
+
+        if (hasAccepted) {
+            byteBuffer.putInt(PROMISE_ACCEPT_OPCODE);
+        } else {
+            byteBuffer.putInt(PROMISE_NONACCEPT_OPCODE);
+        }
+
+        byteBuffer.putInt(proposalID);
+
+        if (receiver.isPresent()) {
+            byteBuffer.putInt(receiver.get());
+        } else {
+            byteBuffer.putInt(EVERYONE_RECEIVES);
+        }
+
+        byteBuffer.put(receiverRole);
+        byteBuffer.putInt(paxosRound);
+
+        if (hasAccepted) {
+            byteBuffer.putInt(acceptedID.get());
+            byteBuffer.put(valueBytes);
+        }
+
+        return byteBuffer.array();
+    }
+
+    public static <B extends Serializable> Promise<B> fromByteArray(final byte[] bytes) throws IOException, ClassNotFoundException {
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(bytes.length);
+
+        byteBuffer.put(bytes);
+        byteBuffer.rewind();
+
+        final boolean hasAccepted;
+        if (byteBuffer.getInt() == PROMISE_ACCEPT_OPCODE) {
+            hasAccepted = true;
+        } else {
+            hasAccepted = false;
+        }
+
+        final int proposalId = byteBuffer.getInt();
+
+        final int possibleReceiver = byteBuffer.getInt();
+        final byte receiverRole = byteBuffer.get();
+        final int paxosRound = byteBuffer.getInt();
+
+        final Optional<Integer> receiver = (possibleReceiver != EVERYONE_RECEIVES) ? Optional.of(possibleReceiver) : Optional.empty();
+
+        if (hasAccepted) {
+            final int acceptedId = byteBuffer.getInt();
+
+            final byte[] encodedValue = Arrays.copyOfRange(byteBuffer.array(), byteBuffer.position(), byteBuffer.array().length);
+            final B acceptedValue = objectFromBytes(encodedValue);
+
+            return new Promise<>(proposalId, acceptedId, acceptedValue, receiver, receiverRole, paxosRound);
+        } else {
+            return new Promise<>(proposalId, receiver, receiverRole, paxosRound);
         }
     }
-    
-    public static <A extends Serializable> Promise fromByteArray(byte[] array) {
-        Promise promise = null;  
-        ByteBuffer buf = ByteBuffer.wrap(array);
-        int pID = buf.getInt(1);
-        if (array[0] == PROMISE_ACCEPT_OPCODE) {
-            byte[] valueBytes = new byte[MAX_VALUE_SIZE];  
-            buf.get(valueBytes, 9, array.length);
-            ByteArrayInputStream bis = new ByteArrayInputStream(valueBytes);
-            int aID = buf.getInt(5);
-            //deserialize value from stream
-            A value = null;
-            try {
-                ObjectInput in = new ObjectInputStream(bis);
-                value = (A) in.readObject();
-            }catch(IOException | ClassNotFoundException ex){
-                System.out.println(ex.toString());
-            }
-            promise = new Promise(pID, aID, value, EVERYONE, PROPOSER, 0);
-            return promise;
-        }else{
-            promise = new Promise(pID, EVERYONE, PROPOSER, 0);
-            return promise;
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o instanceof Promise) {
+            final Promise<A> other = (Promise<A>) o;
+
+            return this.proposalID == other.proposalID &&
+                    this.acceptedID.equals(other.acceptedID) &&
+                    this.acceptedValue.equals(other.acceptedValue) &&
+                    this.receiver.equals(other.receiver) &&
+                    this.receiverRole == other.receiverRole;
         }
+        return false;
     }
 
     @Override
