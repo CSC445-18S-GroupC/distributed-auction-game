@@ -84,7 +84,7 @@ public abstract class PaxosMessage extends Message implements Serializable {
         }
     }
 
-    public static <A extends Serializable> PaxosMessage fromByteArray(byte[] array) throws IOException, ClassNotFoundException{
+    /*public static <A extends Serializable> PaxosMessage fromByteArray(byte[] array) throws IOException, ClassNotFoundException{
         byte opcode = 3;
         ByteArrayInputStream bis = new ByteArrayInputStream(array);
         //ObjectInputStream in = new ObjectInputStream(bis);
@@ -109,7 +109,7 @@ public abstract class PaxosMessage extends Message implements Serializable {
             default:
                 return null;
         }
-    }
+    }*/
 
     @Override
     public String toString() {

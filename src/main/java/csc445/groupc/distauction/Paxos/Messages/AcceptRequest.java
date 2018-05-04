@@ -5,21 +5,19 @@
  */
 package csc445.groupc.distauction.Paxos.Messages;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Optional;
 
 /**
  *
  * @author bolen
  */
-public class AcceptRequest<A> extends PaxosMessage {
+public class AcceptRequest<A extends Serializable> extends PaxosMessage {
     
     private static final byte ACCEPTREQUEST_OPCODE = 3;
-    byte receiver;
+
     private final int proposalID;
     private final A proposalValue;
     
@@ -37,39 +35,66 @@ public class AcceptRequest<A> extends PaxosMessage {
     public A getProposalValue(){
         return this.proposalValue;
     }
-    
-    public byte[] toByteArray(){
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out;
-        try {
-            out = new ObjectOutputStream(bos);
-            //out.writeByte(3);
-            out.writeObject(this);
-            out.flush();
-            out.close();
-            bos.close();
-        } catch (IOException ex) {
-            System.out.println(ex.toString());
+
+    public byte[] toByteArray() throws IOException {
+        final byte[] valueBytes = objectToBytes(proposalValue);
+
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES * 4 + Byte.BYTES + valueBytes.length);
+
+        byteBuffer.putInt(ACCEPTREQUEST_OPCODE);
+        byteBuffer.putInt(proposalID);
+
+        if (receiver.isPresent()) {
+            byteBuffer.putInt(receiver.get());
+        } else {
+            byteBuffer.putInt(EVERYONE_RECEIVES);
         }
-        return bos.toByteArray();
+
+        byteBuffer.put(receiverRole);
+        byteBuffer.putInt(paxosRound);
+
+        byteBuffer.put(valueBytes);
+
+        return byteBuffer.array();
     }
-    
-    public static AcceptRequest fromByteArray(byte[] array){
-        AcceptRequest acceptRequest = null;
-        try{
-            ByteArrayInputStream bis = new ByteArrayInputStream(array);
-            ObjectInputStream in = new ObjectInputStream(bis);
-            acceptRequest = (AcceptRequest)in.readObject();
-            in.close();
-            bis.close();
-        }catch(IOException | ClassNotFoundException ex){
-            System.out.println(ex.toString());
-        }
-        return acceptRequest;
+
+    public static <B extends Serializable> AcceptRequest<B> fromByteArray(final byte[] bytes) throws IOException, ClassNotFoundException {
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(bytes.length);
+
+        byteBuffer.put(bytes);
+        byteBuffer.rewind();
+
+        byteBuffer.getInt();     // Move past OP code
+
+        final int proposalId = byteBuffer.getInt();
+        final int possibleReceiver = byteBuffer.getInt();
+        final byte receiverRole = byteBuffer.get();
+        final int paxosRound = byteBuffer.getInt();
+
+        final byte[] encodedValue = Arrays.copyOfRange(byteBuffer.array(), byteBuffer.position(), byteBuffer.array().length);
+        final B proposalValue = objectFromBytes(encodedValue);
+
+        final Optional<Integer> receiver = (possibleReceiver != EVERYONE_RECEIVES) ? Optional.of(possibleReceiver) : Optional.empty();
+
+        return new AcceptRequest<B>(proposalId, proposalValue, receiver, receiverRole, paxosRound);
     }
 
     @Override
     public String toString() {
         return "AcceptRequest(" + "proposalId = " + proposalID + ", proposalValue = " + proposalValue + super.toString() + ")";
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o instanceof AcceptRequest) {
+            final AcceptRequest<A> other = (AcceptRequest<A>) o;
+
+            return this.proposalID == other.proposalID &&
+                    this.proposalValue.equals(other.proposalValue) &&
+                    this.receiver.equals(other.receiver) &&
+                    this.receiverRole == other.receiverRole &&
+                    this.paxosRound == other.paxosRound;
+        }
+        return false;
     }
 }
