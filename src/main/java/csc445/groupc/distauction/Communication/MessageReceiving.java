@@ -1,9 +1,14 @@
 package csc445.groupc.distauction.Communication;
 
+import csc445.groupc.distauction.Paxos.Messages.Message;
+import csc445.groupc.distauction.Paxos.Messages.PaxosMessage;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -26,7 +31,7 @@ public abstract class MessageReceiving {
      * @throws InterruptedException If the program is interrupted while a
      * message is waiting to be placed on the message queue.
      */
-    public static void run(final String group, final int port, final LinkedBlockingQueue<Integer> queue) throws IOException, InterruptedException {
+    public static void run(final String group, final int port, final LinkedBlockingQueue<Message> queue) throws IOException, InterruptedException, ClassNotFoundException {
         final InetAddress groupAddress = InetAddress.getByName(group);
 
         final MulticastSocket socket = new MulticastSocket(port);
@@ -54,14 +59,13 @@ public abstract class MessageReceiving {
      * @throws InterruptedException If the program is interrupted while it is
      * waiting to place the message on the message queue.
      */
-    private static void handlePacket(final MulticastSocket socket, final LinkedBlockingQueue<Integer> queue) throws IOException, InterruptedException {
+    private static void handlePacket(final MulticastSocket socket, final LinkedBlockingQueue<Message> queue) throws IOException, InterruptedException, ClassNotFoundException {
         final byte[] buffer = new byte[MAX_MESSAGE_SIZE];
         final DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
         socket.receive(packet);
 
-        // TODO: Do the packet -> message conversion here
-        final Integer message = Byte.toUnsignedInt(packet.getData()[0]);
+        final Message message = PaxosMessage.fromByteArray(Arrays.copyOfRange(buffer, 0, packet.getLength()));
 
         queue.put(message);
     }

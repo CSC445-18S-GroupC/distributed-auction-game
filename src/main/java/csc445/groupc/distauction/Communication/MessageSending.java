@@ -1,5 +1,8 @@
 package csc445.groupc.distauction.Communication;
 
+import csc445.groupc.distauction.Paxos.Messages.Message;
+import csc445.groupc.distauction.Paxos.Messages.PaxosMessage;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -21,7 +24,7 @@ public abstract class MessageSending {
      * @throws InterruptedException If the program is interrupted while it is
      * waiting for a message.
      */
-    public static void run(final String sendGroup, final int sendPort, final int receivePort, final LinkedBlockingQueue<Integer> queue) throws IOException, InterruptedException {
+    public static void run(final String sendGroup, final int sendPort, final int receivePort, final LinkedBlockingQueue<Message> queue) throws IOException, InterruptedException, ClassNotFoundException {
         final InetAddress sendGroupAddress = InetAddress.getByName(sendGroup);
 
         final MulticastSocket socket = new MulticastSocket(sendPort);
@@ -29,10 +32,11 @@ public abstract class MessageSending {
             socket.joinGroup(sendGroupAddress);
 
             while (true) {
-                // TODO: Change to use real Messages
-                final Integer message = queue.take();
+                final Message message = queue.take();
 
-                sendMessage(socket, sendGroupAddress, receivePort, message);
+                if (message instanceof PaxosMessage) {
+                    sendMessage(socket, sendGroupAddress, receivePort, (PaxosMessage) message);
+                }
             }
         } finally {
             socket.leaveGroup(sendGroupAddress);
@@ -49,9 +53,8 @@ public abstract class MessageSending {
      * @param message The message to send.
      * @throws IOException If there is an issue while sending the message.
      */
-    private static void sendMessage(final MulticastSocket socket, final InetAddress address, final int receivePort, final Integer message) throws IOException {
-        // TODO: Change to a real message -> packet conversion
-        final byte[] messageBuffer = new byte[]{ (byte) message.intValue() };
+    private static void sendMessage(final MulticastSocket socket, final InetAddress address, final int receivePort, final PaxosMessage message) throws IOException, ClassNotFoundException {
+        final byte[] messageBuffer = message.toByteArray();
 
         final DatagramPacket packet = new DatagramPacket(messageBuffer, messageBuffer.length);
         packet.setAddress(address);
