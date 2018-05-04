@@ -6,6 +6,12 @@ plugins {
 
 mainClassName = "csc445.groupc.distauction.Main"
 
+jar {
+    manifest {
+        attributes "Main-Class": "csc445.groupc.distauction.Main"
+    }
+}
+
 repositories {
     mavenCentral()
 }

@@ -1,5 +1,7 @@
 package csc445.groupc.distauction;
 
+import csc445.groupc.distauction.Communication.MessageReceiving;
+import csc445.groupc.distauction.Communication.MessageSending;
 import csc445.groupc.distauction.Communication.MulticastSimulator;
 import csc445.groupc.distauction.GameLogic.Bid;
 import csc445.groupc.distauction.GameLogic.GameState;
@@ -31,13 +33,13 @@ public class Main {
         onThread(() -> {
             try {MessageSending.run(group, sendPort, receivePort, sendQueue);} catch (Exception e) {}
         });*/
-        final List<LinkedBlockingQueue<Message>> allSendingQueues = new ArrayList<>();
-        final List<LinkedBlockingQueue<Message>> allReceivingQueues = new ArrayList<>();
+        //final List<LinkedBlockingQueue<Message>> allSendingQueues = new ArrayList<>();
+        //final List<LinkedBlockingQueue<Message>> allReceivingQueues = new ArrayList<>();
         final List<Paxos<GameStep>> paxosHandlers = new ArrayList<>();
 
         final String[] players = new String[]{"Hi", "Sally", "Jane"};
-        for (int i = 0; i < numNodes; i++) {
-            final int id = i;
+        //for (int i = 0; i < numNodes; i++) {
+            final int id = Integer.parseInt(args[0]);
             final GameState gameState = new GameState(LocalDateTime.now(), players, (gs) -> {
                 System.out.println(gs);
             });
@@ -47,26 +49,42 @@ public class Main {
 
             paxos.run();
 
-            allSendingQueues.add(paxos.getSendingQueue());
-            allReceivingQueues.add(paxos.getReceivingQueue());
-        }
+            //allSendingQueues.add(paxos.getSendingQueue());
+            //allReceivingQueues.add(paxos.getReceivingQueue());
+        //}
 
-        final MulticastSimulator multicastSimulator = new MulticastSimulator(allSendingQueues, allReceivingQueues);
+        //final MulticastSimulator multicastSimulator = new MulticastSimulator(allSendingQueues, allReceivingQueues);
+
+        //onThread(() -> {
+        //    try {multicastSimulator.run();} catch (Exception e) {}
+        //});
 
         onThread(() -> {
-            try {multicastSimulator.run();} catch (Exception e) {}
+            try {
+                MessageReceiving.run(group, receivePort, paxos.getReceivingQueue());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        onThread(() -> {
+            try {
+                MessageSending.run(group, sendPort, receivePort, paxos.getSendingQueue());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
 
         final Scanner kb = new Scanner(System.in);
-        final Random rand = new Random();
+        //final Random rand = new Random();
         while (true) {
             kb.nextLine();
 
-            final int i = rand.nextInt(players.length);
+            //final int i = rand.nextInt(players.length);
 
             //allReceivingQueues.get(i).put(new ProposalRequest(new Bid(players[i], 10.05f)));
-            paxosHandlers.get(i).proposeStep(new Bid(players[i], 10.05f));
-            System.out.println("Sent proposal request");
+            paxos.proposeStep(gameState.generateRandomBid(players[id]));
+            //paxosHandlers.get(id).proposeStep(gameState.generateRandomBid(players[id]));
+            //System.out.println("Sent proposal request");
         }
     }
 
