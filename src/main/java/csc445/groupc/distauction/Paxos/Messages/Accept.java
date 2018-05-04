@@ -5,21 +5,16 @@
  */
 package csc445.groupc.distauction.Paxos.Messages;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Optional;
 
 /**
  *
  * @author bolen
  */
-public class Accept<A> extends PaxosMessage {
-    
-    private static final byte ACCEPT_OPCODE = 4;
-    byte receiver;
+public class Accept<A extends Serializable> extends PaxosMessage {
     private final int proposalID;
     private final A proposalValue;
     
@@ -30,10 +25,6 @@ public class Accept<A> extends PaxosMessage {
         this.proposalValue = proposalValue;
     }
     
-    public void setReceiver(byte rec){
-        this.receiver = rec;
-    }
-    
     public int getProposalID(){
         return this.proposalID;
     }
@@ -41,44 +32,66 @@ public class Accept<A> extends PaxosMessage {
     public A getProposalValue(){
         return this.proposalValue;
     }
-    
-    public byte[] toByteArray(){
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out;
-        try {
-            out = new ObjectOutputStream(bos);
-            out.writeByte(Accept.ACCEPT_OPCODE);//write this.opcode, then id, then value
-            out.writeByte(this.receiver);
-            out.writeInt(this.proposalID);
-            out.writeObject(this.proposalValue);
-            //out.writeObject(Accept.ACCEPT_OPCODE);
-            out.flush();
-            out.close();
-            bos.close();
-        } catch (IOException ex) {
-            System.out.println(ex.toString());
+
+    public byte[] toByteArray() throws IOException {
+        final byte[] valueBytes = objectToBytes(proposalValue);
+
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES * 4 + Byte.BYTES + valueBytes.length);
+
+        byteBuffer.putInt(ACCEPT_OP);
+        byteBuffer.putInt(proposalID);
+
+        if (receiver.isPresent()) {
+            byteBuffer.putInt(receiver.get());
+        } else {
+            byteBuffer.putInt(EVERYONE_RECEIVES);
         }
-        return bos.toByteArray();
+
+        byteBuffer.put(receiverRole);
+        byteBuffer.putInt(paxosRound);
+
+        byteBuffer.put(valueBytes);
+
+        return byteBuffer.array();
     }
-    
-    public static Accept fromByteArray(byte[] array){
-        Accept accept = null;
-        try{
-            ByteArrayInputStream bis = new ByteArrayInputStream(array);
-            ObjectInputStream in = new ObjectInputStream(bis);
-            accept.receiver = array[1];
-            
-            accept = (Accept)in.readObject();
-            in.close();
-            bis.close();
-        }catch(IOException | ClassNotFoundException ex){
-            System.out.println(ex.toString());
-        }
-        return accept;
+
+    public static <B extends Serializable> Accept<B> fromByteArray(final byte[] bytes) throws IOException, ClassNotFoundException {
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(bytes.length);
+
+        byteBuffer.put(bytes);
+        byteBuffer.rewind();
+
+        byteBuffer.getInt();     // Move past OP code
+
+        final int proposalId = byteBuffer.getInt();
+        final int possibleReceiver = byteBuffer.getInt();
+        final byte receiverRole = byteBuffer.get();
+        final int paxosRound = byteBuffer.getInt();
+
+        final byte[] encodedValue = Arrays.copyOfRange(byteBuffer.array(), byteBuffer.position(), byteBuffer.array().length);
+        final B proposalValue = objectFromBytes(encodedValue);
+
+        final Optional<Integer> receiver = (possibleReceiver != EVERYONE_RECEIVES) ? Optional.of(possibleReceiver) : Optional.empty();
+
+        return new Accept<B>(proposalId, proposalValue, receiver, receiverRole, paxosRound);
     }
 
     @Override
     public String toString() {
         return "Accept(" + "proposalId = " + proposalID + ", proposalValue = " + proposalValue + super.toString() + ")";
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o instanceof Accept) {
+            final Accept<A> other = (Accept<A>) o;
+
+            return this.proposalID == other.proposalID &&
+                    this.proposalValue.equals(other.proposalValue) &&
+                    this.receiver.equals(other.receiver) &&
+                    this.receiverRole == other.receiverRole &&
+                    this.paxosRound == other.paxosRound;
+        }
+        return false;
     }
 }
