@@ -84,7 +84,7 @@ public class GameStateTest {
         gs.applyStep(bidA);
         gs.applyStep(bidB);
 
-        final Timeout timeout = new Timeout();
+        final Timeout timeout = new Timeout(2);
 
         gs.applyStep(timeout);
 
