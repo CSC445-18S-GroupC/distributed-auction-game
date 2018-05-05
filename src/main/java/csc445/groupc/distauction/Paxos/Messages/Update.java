@@ -85,15 +85,21 @@ public class Update<A extends Serializable> extends PaxosMessage {
 
     @Override
     public boolean equals(final Object o) {
-        if (o instanceof Update) {
-            final Update<A> other = (Update<A>) o;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-            return this.entryId == other.entryId &&
-                    this.value.equals(other.value) &&
-                    this.mostRecentRound == other.mostRecentRound &&
-                    this.receiver.equals(other.receiver) &&
-                    this.receiverRole == other.receiverRole;
-        }
-        return false;
+        final Update<?> update = (Update<?>) o;
+
+        if (entryId != update.entryId) return false;
+        if (mostRecentRound != update.mostRecentRound) return false;
+        return value.equals(update.value);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = entryId;
+        result = 31 * result + value.hashCode();
+        result = 31 * result + mostRecentRound;
+        return result;
     }
 }

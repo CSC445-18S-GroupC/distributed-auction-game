@@ -84,15 +84,19 @@ public class AcceptRequest<A extends Serializable> extends PaxosMessage {
 
     @Override
     public boolean equals(final Object o) {
-        if (o instanceof AcceptRequest) {
-            final AcceptRequest<A> other = (AcceptRequest<A>) o;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-            return this.proposalID == other.proposalID &&
-                    this.proposalValue.equals(other.proposalValue) &&
-                    this.receiver.equals(other.receiver) &&
-                    this.receiverRole == other.receiverRole &&
-                    this.paxosRound == other.paxosRound;
-        }
-        return false;
+        final AcceptRequest<?> that = (AcceptRequest<?>) o;
+
+        if (proposalID != that.proposalID) return false;
+        return proposalValue.equals(that.proposalValue);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = proposalID;
+        result = 31 * result + proposalValue.hashCode();
+        return result;
     }
 }

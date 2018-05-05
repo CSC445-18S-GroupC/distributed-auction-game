@@ -13,7 +13,7 @@ import java.util.Optional;
  *
  * @author bolen
  */
-public abstract class PaxosMessage extends Message implements Serializable {
+public abstract class PaxosMessage extends Message {
     public static final byte PROPOSER = 0;
     public static final byte ACCEPTOR = 1;
     public static final byte LEARNER = 2;

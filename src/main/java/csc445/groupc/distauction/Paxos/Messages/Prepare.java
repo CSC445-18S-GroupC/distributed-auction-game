@@ -74,14 +74,16 @@ public class Prepare extends PaxosMessage {
 
     @Override
     public boolean equals(final Object o) {
-        if (o instanceof Prepare) {
-            final Prepare other = (Prepare) o;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-            return this.proposalID == other.proposalID &&
-                    this.receiver.equals(other.receiver) &&
-                    this.receiverRole == other.receiverRole &&
-                    this.paxosRound == other.paxosRound;
-        }
-        return false;
+        final Prepare prepare = (Prepare) o;
+
+        return proposalID == prepare.proposalID;
+    }
+
+    @Override
+    public int hashCode() {
+        return proposalID;
     }
 }

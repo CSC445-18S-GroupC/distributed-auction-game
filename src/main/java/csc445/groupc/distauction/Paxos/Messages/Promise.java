@@ -131,17 +131,22 @@ public class Promise<A extends Serializable> extends PaxosMessage {
 
     @Override
     public boolean equals(final Object o) {
-        if (o instanceof Promise) {
-            final Promise<A> other = (Promise<A>) o;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-            return this.proposalID == other.proposalID &&
-                    this.acceptedID.equals(other.acceptedID) &&
-                    this.acceptedValue.equals(other.acceptedValue) &&
-                    this.receiver.equals(other.receiver) &&
-                    this.receiverRole == other.receiverRole &&
-                    this.paxosRound == other.paxosRound;
-        }
-        return false;
+        final Promise<?> promise = (Promise<?>) o;
+
+        if (proposalID != promise.proposalID) return false;
+        if (acceptedID != null ? !acceptedID.equals(promise.acceptedID) : promise.acceptedID != null) return false;
+        return acceptedValue != null ? acceptedValue.equals(promise.acceptedValue) : promise.acceptedValue == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = acceptedID != null ? acceptedID.hashCode() : 0;
+        result = 31 * result + (acceptedValue != null ? acceptedValue.hashCode() : 0);
+        result = 31 * result + proposalID;
+        return result;
     }
 
     @Override

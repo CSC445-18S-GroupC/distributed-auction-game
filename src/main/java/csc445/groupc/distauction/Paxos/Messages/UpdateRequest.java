@@ -61,13 +61,16 @@ public class UpdateRequest extends PaxosMessage {
 
     @Override
     public boolean equals(final Object o) {
-        if (o instanceof UpdateRequest) {
-            final UpdateRequest other = (UpdateRequest) o;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-            return this.entryId == other.entryId &&
-                    this.receiver.equals(other.receiver) &&
-                    this.receiverRole == other.receiverRole;
-        }
-        return false;
+        final UpdateRequest that = (UpdateRequest) o;
+
+        return entryId == that.entryId;
+    }
+
+    @Override
+    public int hashCode() {
+        return entryId;
     }
 }
