@@ -50,6 +50,8 @@ public class GameStateTest {
     public void getMostRecentBidWin() {
         final GameState gs = new GameState(LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"}, (s) -> {});
 
+        assertEquals(1, gs.getRound());
+
         for (int i = 0; i < 10;i++) {
             final Bid bidA = new Bid("Alice", 5.02f);
             final Bid bidB = new Bid("Bob", 5.01f);
@@ -57,6 +59,8 @@ public class GameStateTest {
             gs.applyStep(bidA);
             gs.applyStep(bidB);
         }
+
+        assertEquals(2, gs.getRound());
 
         assertEquals(Optional.empty(), gs.getMostRecentBid());
     }
@@ -89,6 +93,37 @@ public class GameStateTest {
         gs.applyStep(timeout);
 
         assertEquals(Optional.empty(), gs.getMostRecentBid());
+    }
+
+    @Test
+    public void getMostRecentBidOldTimeout() {
+        final GameState gs = new GameState(LocalDateTime.now(), new String[] {"Alice", "Bob", "Jane"}, (s) -> {});
+
+        assertEquals(1, gs.getRound());
+
+        for (int i = 0; i < 10;i++) {
+            final Bid bidA = new Bid("Alice", 5.02f);
+            final Bid bidB = new Bid("Bob", 5.01f);
+
+            gs.applyStep(bidA);
+            gs.applyStep(bidB);
+        }
+
+        assertEquals(2, gs.getRound());
+
+        final Bid bidC = new Bid("Alice", 2.01f);
+
+        gs.applyStep(bidC);
+
+        assertEquals(2, gs.getRound());
+
+        final Timeout timeout = new Timeout(1);
+
+        gs.applyStep(timeout);
+
+        assertEquals(2, gs.getRound());
+
+        assertEquals(Optional.of(bidC), gs.getMostRecentBid());
     }
 
     @Test
