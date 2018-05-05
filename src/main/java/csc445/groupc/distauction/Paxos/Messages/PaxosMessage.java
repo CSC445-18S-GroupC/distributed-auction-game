@@ -96,7 +96,7 @@ public abstract class PaxosMessage extends Message {
         } else if (opCode == UPDATE_OP) {
             return Update.fromByteArray(bytes);
         }
-        return null;    // This should not run unless the message bytes have an invalid op code
+        return null;    // This should only run in the case that the message bytes have an invalid op code
     }
 
     @Override

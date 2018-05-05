@@ -9,7 +9,4 @@ package csc445.groupc.distauction.Paxos.Messages;
  *
  * @author bolen
  */
-public abstract class Message {
-    
-    static final int MAX_VALUE_SIZE = 1024;
-}
+public abstract class Message {}
