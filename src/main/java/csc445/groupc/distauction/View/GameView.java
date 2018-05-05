@@ -16,8 +16,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.Phaser;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GameView {
     private JLabel bidLabel;
@@ -26,18 +26,22 @@ public class GameView {
     public JPanel mainPanel;
     private GameState gameState;
 
-    private final ReentrantLock timeoutLock;
-    private final Condition timeoutCondition;
+    private final Phaser phaser;
 
     public GameView(ArrayList<String> usernames, int id, String multicastAddr) {
-        timeoutLock = new ReentrantLock();
-        timeoutCondition = timeoutLock.newCondition();
+        phaser = new Phaser(1);
 
         String[] players = usernames.toArray(new String[0]);
+        AtomicInteger prevGameRound = new AtomicInteger(1);
         gameState = new GameState(LocalDateTime.now(), players, (gs) -> {
             System.out.println(gs);
             updateUsers(gs.getPlayerScores());
             updateBid(gs.getMostRecentBid());
+
+            if (gs.getRound() > prevGameRound.get()) {
+                prevGameRound.set(gs.getRound());
+                phaser.arrive();
+            }
         });
         updateUsers(gameState.getPlayerScores());
 
@@ -67,24 +71,27 @@ public class GameView {
                 System.out.println("Bid Pressed");
                 try {
                     paxos.proposeStep(gameState.generateRandomBid(usernames.get(id)));
-                }catch (InterruptedException ex){
+                } catch (InterruptedException ex) {
                     ex.printStackTrace();
                 }
             }
         });
 
         onThread(() -> {
-            int waitingRound = gameState.getRound();
+            int waitingRound;
             while (true) {
+                waitingRound = gameState.getRound();
                 try {
-                    timeoutCondition.await(GameState.TIMEOUT_LENGTH, GameState.TIMEOUT_UNIT);
-
-                    if (gameState.getRound() <= waitingRound) {
-                        waitingRound = gameState.getRound() + 1;
-                        paxos.proposeStep(new Timeout(waitingRound));
+                    phaser.awaitAdvanceInterruptibly(phaser.getPhase(), GameState.TIMEOUT_LENGTH, GameState.TIMEOUT_UNIT);
+                } catch (Exception ex) {
+                } finally {
+                    try {
+                        if (gameState.getRound() <= waitingRound) {
+                            paxos.proposeStep(new Timeout(waitingRound));
+                        }
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
                     }
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
                 }
             }
         });
