@@ -78,9 +78,13 @@ public class HostServer implements Runnable {
         int nextNum = 1;
         CountDownLatch startSignal = new CountDownLatch(1);
         ServerSocket serverSocket = new ServerSocket(port);
-        while (true) {
-            Socket socket = serverSocket.accept();
-            //new HostServer(socket, nextNum++, startSignal);
+        try {
+            while (true) {
+                Socket socket = serverSocket.accept();
+                //new HostServer(socket, nextNum++, startSignal);
+            }
+        } finally {
+            serverSocket.close();
         }
     }
 }

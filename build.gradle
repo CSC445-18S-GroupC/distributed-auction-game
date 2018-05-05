@@ -18,6 +18,7 @@ repositories {
 
 dependencies {
     testCompile "junit:junit:4.11"
+    compile "com.intellij:forms_rt:7.0.3"
 }
 
 // Let reading from System.in work while using `gradle run`
