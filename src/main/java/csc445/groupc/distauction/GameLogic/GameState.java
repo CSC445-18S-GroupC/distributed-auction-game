@@ -124,7 +124,7 @@ public class GameState {
      * Optional is returned.
      */
     public Optional<Bid> getMostRecentBid() {
-        return topBid;
+        return topBid.map((b) -> new Bid(b.getBidder(), amount));
     }
 
     private void onUpdate() {
