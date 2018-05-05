@@ -67,6 +67,8 @@ public abstract class MessageReceiving {
 
         final Message message = PaxosMessage.fromByteArray(Arrays.copyOfRange(buffer, 0, packet.getLength()));
 
-        queue.put(message);
+        if (message != null) {
+            queue.put(message);
+        }
     }
 }
