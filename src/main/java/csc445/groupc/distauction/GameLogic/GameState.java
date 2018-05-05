@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -40,8 +41,8 @@ public class GameState {
     private static final float MIN_BID_INCREASE = 0.01f;
 
     /* The amount of time that a game can run for before it times out */
-    public static final float TIMEOUT_LENGTH = 2;
-    public static final TemporalUnit TIMEOUT_UNIT = ChronoUnit.MINUTES;
+    public static final long TIMEOUT_LENGTH = 2;
+    public static final TimeUnit TIMEOUT_UNIT = TimeUnit.MINUTES;
 
     /* Player score change amounts associated with the different game end types */
     private static final int WINNING_BID_LEADER_SCORE_CHANGE = 100;
@@ -108,6 +109,10 @@ public class GameState {
         }
     }
 
+    public int getRound() {
+        return round;
+    }
+
     /**
      * Returns a copy of the scores of all of the players in the game.
      *
@@ -152,7 +157,10 @@ public class GameState {
         if (gameStep instanceof Bid) {
             applyBid((Bid) gameStep);
         } else if (gameStep instanceof Timeout) {
-            applyTimeout();
+            final Timeout timeout = (Timeout) gameStep;
+            if (timeout.getGameRound() == round) {
+                applyTimeout();
+            }
         }
 
         onUpdate();
