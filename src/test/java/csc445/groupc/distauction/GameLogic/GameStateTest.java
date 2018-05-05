@@ -43,7 +43,7 @@ public class GameStateTest {
         gs.applyStep(bidA);
         gs.applyStep(bidB);
 
-        assertEquals(Optional.of(bidB), gs.getMostRecentBid());
+        assertEquals(Optional.of(new Bid(bidB.getBidder(), bidA.getBidAmount() + bidB.getBidAmount())), gs.getMostRecentBid());
     }
 
     @Test
@@ -84,7 +84,7 @@ public class GameStateTest {
         gs.applyStep(bidA);
         gs.applyStep(bidB);
 
-        final Timeout timeout = new Timeout(2);
+        final Timeout timeout = new Timeout(1);
 
         gs.applyStep(timeout);
 
