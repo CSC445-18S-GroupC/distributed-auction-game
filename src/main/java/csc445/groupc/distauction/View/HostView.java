@@ -14,6 +14,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
 public class HostView {
@@ -29,10 +30,13 @@ public class HostView {
     private Thread server;
     private CountDownLatch startSignal;
 
-    public HostView(String username) {
+    private final String gameInfoFile;
+
+    public HostView(final String username, final String gameInfoFile) {
         playBtn.addActionListener(new BtnClicked());
 
         usernames = new ArrayList<>();
+        this.gameInfoFile = gameInfoFile;
 
         try {
             ip = Inet4Address.getLocalHost().getHostAddress();
@@ -73,46 +77,120 @@ public class HostView {
      */
     private void $$$setupUI$$$() {
         hostPanel = new JPanel();
-        hostPanel.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(5, 2, new Insets(0, 0, 0, 0), -1, -1));
+        hostPanel.setLayout(new GridBagLayout());
         hostPanel.setPreferredSize(new Dimension(400, 300));
         ipAddress = new JLabel();
-        ipAddress.setFont(new Font(ipAddress.getFont().getName(), ipAddress.getFont().getStyle(), 18));
+        Font ipAddressFont = this.$$$getFont$$$(null, -1, 18, ipAddress.getFont());
+        if (ipAddressFont != null) ipAddress.setFont(ipAddressFont);
         ipAddress.setText("0.0.0.0");
-        hostPanel.add(ipAddress, new com.intellij.uiDesigner.core.GridConstraints(1, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_WEST, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        GridBagConstraints gbc;
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.anchor = GridBagConstraints.WEST;
+        hostPanel.add(ipAddress, gbc);
         final JLabel label1 = new JLabel();
-        label1.setFont(new Font(label1.getFont().getName(), label1.getFont().getStyle(), 20));
+        Font label1Font = this.$$$getFont$$$(null, -1, 20, label1.getFont());
+        if (label1Font != null) label1.setFont(label1Font);
         label1.setText("Hosting");
         label1.setVerticalAlignment(0);
-        hostPanel.add(label1, new com.intellij.uiDesigner.core.GridConstraints(0, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_EAST, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weighty = 1.0;
+        gbc.anchor = GridBagConstraints.EAST;
+        hostPanel.add(label1, gbc);
         final JLabel label2 = new JLabel();
-        label2.setFont(new Font(label2.getFont().getName(), label2.getFont().getStyle(), 18));
+        Font label2Font = this.$$$getFont$$$(null, -1, 18, label2.getFont());
+        if (label2Font != null) label2.setFont(label2Font);
         label2.setText("IP:");
-        hostPanel.add(label2, new com.intellij.uiDesigner.core.GridConstraints(1, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weighty = 1.0;
+        hostPanel.add(label2, gbc);
         final JLabel label3 = new JLabel();
-        label3.setFont(new Font(label3.getFont().getName(), label3.getFont().getStyle(), 18));
+        Font label3Font = this.$$$getFont$$$(null, -1, 18, label3.getFont());
+        if (label3Font != null) label3.setFont(label3Font);
         label3.setText("Port:");
-        hostPanel.add(label3, new com.intellij.uiDesigner.core.GridConstraints(2, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.weighty = 1.0;
+        hostPanel.add(label3, gbc);
         portNumber = new JLabel();
-        portNumber.setFont(new Font(portNumber.getFont().getName(), portNumber.getFont().getStyle(), 18));
+        Font portNumberFont = this.$$$getFont$$$(null, -1, 18, portNumber.getFont());
+        if (portNumberFont != null) portNumber.setFont(portNumberFont);
         portNumber.setText("0000");
-        hostPanel.add(portNumber, new com.intellij.uiDesigner.core.GridConstraints(2, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_WEST, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.anchor = GridBagConstraints.WEST;
+        hostPanel.add(portNumber, gbc);
         final JLabel label4 = new JLabel();
-        label4.setFont(new Font(label4.getFont().getName(), label4.getFont().getStyle(), 20));
+        Font label4Font = this.$$$getFont$$$(null, -1, 20, label4.getFont());
+        if (label4Font != null) label4.setFont(label4Font);
         label4.setText("Server");
-        hostPanel.add(label4, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_WEST, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.anchor = GridBagConstraints.WEST;
+        hostPanel.add(label4, gbc);
         final JLabel label5 = new JLabel();
-        label5.setFont(new Font(label5.getFont().getName(), label5.getFont().getStyle(), 18));
+        Font label5Font = this.$$$getFont$$$(null, -1, 18, label5.getFont());
+        if (label5Font != null) label5.setFont(label5Font);
         label5.setText("Connected Users:");
-        hostPanel.add(label5, new com.intellij.uiDesigner.core.GridConstraints(3, 0, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.weighty = 1.0;
+        hostPanel.add(label5, gbc);
         numOfConnected = new JLabel();
-        numOfConnected.setFont(new Font(numOfConnected.getFont().getName(), numOfConnected.getFont().getStyle(), 18));
+        Font numOfConnectedFont = this.$$$getFont$$$(null, -1, 18, numOfConnected.getFont());
+        if (numOfConnectedFont != null) numOfConnected.setFont(numOfConnectedFont);
         numOfConnected.setText("0");
-        hostPanel.add(numOfConnected, new com.intellij.uiDesigner.core.GridConstraints(3, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_WEST, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.anchor = GridBagConstraints.WEST;
+        hostPanel.add(numOfConnected, gbc);
         playBtn = new JButton();
         playBtn.setLabel("Start");
         playBtn.setMargin(new Insets(0, 2, 0, 2));
         playBtn.setText("Start");
-        hostPanel.add(playBtn, new com.intellij.uiDesigner.core.GridConstraints(4, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 4;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        hostPanel.add(playBtn, gbc);
+    }
+
+    /**
+     * @noinspection ALL
+     */
+    private Font $$$getFont$$$(String fontName, int style, int size, Font currentFont) {
+        if (currentFont == null) return null;
+        String resultName;
+        if (fontName == null) {
+            resultName = currentFont.getName();
+        } else {
+            Font testFont = new Font(fontName, Font.PLAIN, 10);
+            if (testFont.canDisplay('a') && testFont.canDisplay('1')) {
+                resultName = fontName;
+            } else {
+                resultName = currentFont.getName();
+            }
+        }
+        return new Font(resultName, style >= 0 ? style : currentFont.getStyle(), size >= 0 ? size : currentFont.getSize());
     }
 
     /**
@@ -122,14 +200,13 @@ public class HostView {
         return hostPanel;
     }
 
-
     private class BtnClicked implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             System.out.println("Play");
             server.interrupt();
 
-            LoginView.frame.setContentPane(new GameView(usernames, id, HostServer.multicastAddr).mainPanel);
+            LoginView.frame.setContentPane(new GameView(usernames.toArray(new String[0]), id, HostServer.multicastAddr, gameInfoFile, Optional.empty()).mainPanel);
             LoginView.frame.pack();
             startSignal.countDown();
         }

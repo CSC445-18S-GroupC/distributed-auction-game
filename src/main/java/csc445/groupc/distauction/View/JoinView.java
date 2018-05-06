@@ -6,18 +6,21 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Optional;
 
 public class JoinView {
     private JTextField hostIPField;
     private JTextField hostPortField;
     private JButton connectButton;
     public JPanel joinPanel;
-    private String username;
 
+    private final String username;
+    private final String gameInfoFile;
 
-    public JoinView(String username) {
+    public JoinView(final String username, final String gameInfoFile) {
         connectButton.addActionListener(new BtnClicked());
         this.username = username;
+        this.gameInfoFile = gameInfoFile;
     }
 
     {
@@ -47,7 +50,8 @@ public class JoinView {
         gbc.insets = new Insets(20, 0, 0, 0);
         joinPanel.add(spacer1, gbc);
         final JLabel label1 = new JLabel();
-        label1.setFont(new Font(label1.getFont().getName(), label1.getFont().getStyle(), 20));
+        Font label1Font = this.$$$getFont$$$(null, -1, 20, label1.getFont());
+        if (label1Font != null) label1.setFont(label1Font);
         label1.setHorizontalAlignment(10);
         label1.setHorizontalTextPosition(11);
         label1.setText("Connect to Host");
@@ -58,7 +62,8 @@ public class JoinView {
         gbc.anchor = GridBagConstraints.SOUTH;
         joinPanel.add(label1, gbc);
         final JLabel label2 = new JLabel();
-        label2.setFont(new Font(label2.getFont().getName(), label2.getFont().getStyle(), 18));
+        Font label2Font = this.$$$getFont$$$(null, -1, 18, label2.getFont());
+        if (label2Font != null) label2.setFont(label2Font);
         label2.setText("Host IP:");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -66,7 +71,8 @@ public class JoinView {
         gbc.anchor = GridBagConstraints.WEST;
         joinPanel.add(label2, gbc);
         final JLabel label3 = new JLabel();
-        label3.setFont(new Font(label3.getFont().getName(), label3.getFont().getStyle(), 18));
+        Font label3Font = this.$$$getFont$$$(null, -1, 18, label3.getFont());
+        if (label3Font != null) label3.setFont(label3Font);
         label3.setText("Port:");
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -118,6 +124,25 @@ public class JoinView {
     /**
      * @noinspection ALL
      */
+    private Font $$$getFont$$$(String fontName, int style, int size, Font currentFont) {
+        if (currentFont == null) return null;
+        String resultName;
+        if (fontName == null) {
+            resultName = currentFont.getName();
+        } else {
+            Font testFont = new Font(fontName, Font.PLAIN, 10);
+            if (testFont.canDisplay('a') && testFont.canDisplay('1')) {
+                resultName = fontName;
+            } else {
+                resultName = currentFont.getName();
+            }
+        }
+        return new Font(resultName, style >= 0 ? style : currentFont.getStyle(), size >= 0 ? size : currentFont.getSize());
+    }
+
+    /**
+     * @noinspection ALL
+     */
     public JComponent $$$getRootComponent$$$() {
         return joinPanel;
     }
@@ -137,8 +162,8 @@ public class JoinView {
                 HostClient clientConnection = new HostClient(hostIP, hostPort);
                 clientConnection.join(username);
 
-                LoginView.frame.setContentPane(new GameView(clientConnection.getUsers(),
-                        clientConnection.getUsers().indexOf(username), clientConnection.getMulticastAddr()).mainPanel);
+                LoginView.frame.setContentPane(new GameView(clientConnection.getUsers().toArray(new String[0]),
+                        clientConnection.getUsers().indexOf(username), clientConnection.getMulticastAddr(), gameInfoFile, Optional.empty()).mainPanel);
                 LoginView.frame.pack();
             }
         }

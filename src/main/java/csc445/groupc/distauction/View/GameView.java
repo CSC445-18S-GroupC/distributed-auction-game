@@ -16,12 +16,21 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.Phaser;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class GameView {
     private JLabel bidLabel;
@@ -31,27 +40,49 @@ public class GameView {
     private GameState gameState;
 
     private final Phaser phaser;
+    private final ReentrantLock gameInfoFileLock;
 
-    public GameView(ArrayList<String> usernames, int id, String multicastAddr) {
+    public GameView(String[] usernames, int id, String multicastAddr, final String gameInfoFile,
+                    final Optional<Collection<GameStep>> previousSteps) {
         phaser = new Phaser(1);
+        gameInfoFileLock = new ReentrantLock();
 
-        String[] players = usernames.toArray(new String[0]);
-        AtomicInteger prevGameRound = new AtomicInteger(1);
-        gameState = new GameState(LocalDateTime.now(), players, (gs) -> {
-            System.out.println(gs);
-            updateUsers(gs.getPlayerScores());
-            updateBid(gs.getMostRecentBid());
+        if (!previousSteps.isPresent()) {
+            appendLineToFile(gameInfoFile, playersToString(usernames));
+            appendLineToFile(gameInfoFile, id + "");
+            appendLineToFile(gameInfoFile, multicastAddr);
+            appendLineToFile(gameInfoFile, "--------");
+        }
 
-            if (gs.getRound() > prevGameRound.get()) {
-                prevGameRound.set(gs.getRound());
+        final AtomicInteger prevGameRound = new AtomicInteger(1);
+        final AtomicBoolean startedRun = new AtomicBoolean(false);
+        gameState = new GameState(LocalDateTime.now(), usernames, (symbol) -> {
+            System.out.println(gameState);
+            updateUsers(gameState.getPlayerScores());
+            updateBid(gameState.getMostRecentBid());
+
+            if (startedRun.get()) {
+                gameInfoFileLock.lock();
+                try {
+                    appendLineToFile(gameInfoFile, symbol.toString());
+                } finally {
+                    gameInfoFileLock.unlock();
+                }
+            }
+
+            if (gameState.getRound() > prevGameRound.get()) {
+                prevGameRound.set(gameState.getRound());
                 phaser.arrive();
             }
         });
+
         updateUsers(gameState.getPlayerScores());
 
-        Paxos<GameStep> paxos = new Paxos<>(id, usernames.size(), (s) -> {
+        Paxos<GameStep> paxos = new Paxos<>(id, usernames.length, (s) -> {
             gameState.applyStep(s);
-        });
+        }, previousSteps);
+
+        startedRun.set(true);
         paxos.run();
 
         onThread(() -> {
@@ -74,7 +105,7 @@ public class GameView {
             public void actionPerformed(ActionEvent e) {
                 System.out.println("Bid Pressed");
                 try {
-                    paxos.proposeStep(gameState.generateRandomBid(usernames.get(id)));
+                    paxos.proposeStep(gameState.generateRandomBid(usernames[id]));
                 } catch (InterruptedException ex) {
                     ex.printStackTrace();
                 }
@@ -99,6 +130,19 @@ public class GameView {
                 }
             }
         });
+    }
+
+    private static String playersToString(final String[] usernames) {
+        return String.join(",", usernames);
+    }
+
+    private static void appendLineToFile(final String filePath, final String line) {
+        try (final FileWriter fileWriter = new FileWriter(filePath, true);
+             final BufferedWriter writer = new BufferedWriter(fileWriter)) {
+            writer.append(line + "\n");
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
     public void updateUsers(HashMap<String, Integer> playerScores) {
@@ -157,31 +201,76 @@ public class GameView {
      */
     private void $$$setupUI$$$() {
         mainPanel = new JPanel();
-        mainPanel.setLayout(new com.intellij.uiDesigner.core.GridLayoutManager(5, 2, new Insets(5, 5, 5, 5), -1, -1));
+        mainPanel.setLayout(new GridBagLayout());
         mainPanel.setMinimumSize(new Dimension(400, 300));
         mainPanel.setPreferredSize(new Dimension(450, 300));
         final JLabel label1 = new JLabel();
-        label1.setFont(new Font(label1.getFont().getName(), label1.getFont().getStyle(), 20));
+        Font label1Font = this.$$$getFont$$$(null, -1, 20, label1.getFont());
+        if (label1Font != null) label1.setFont(label1Font);
         label1.setText("Current Bid:");
-        mainPanel.add(label1, new com.intellij.uiDesigner.core.GridConstraints(0, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        GridBagConstraints gbc;
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.ipady = 40;
+        mainPanel.add(label1, gbc);
         bidLabel = new JLabel();
-        bidLabel.setFont(new Font(bidLabel.getFont().getName(), bidLabel.getFont().getStyle(), 20));
+        Font bidLabelFont = this.$$$getFont$$$(null, -1, 20, bidLabel.getFont());
+        if (bidLabelFont != null) bidLabel.setFont(bidLabelFont);
         bidLabel.setHorizontalAlignment(0);
         bidLabel.setHorizontalTextPosition(0);
         bidLabel.setText("username: $0");
-        mainPanel.add(bidLabel, new com.intellij.uiDesigner.core.GridConstraints(1, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_NORTH, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.weightx = 1.0;
+        gbc.anchor = GridBagConstraints.NORTH;
+        gbc.ipady = 40;
+        mainPanel.add(bidLabel, gbc);
         bidButton = new JButton();
-        bidButton.setFont(new Font(bidButton.getFont().getName(), bidButton.getFont().getStyle(), 20));
+        Font bidButtonFont = this.$$$getFont$$$(null, -1, 20, bidButton.getFont());
+        if (bidButtonFont != null) bidButton.setFont(bidButtonFont);
         bidButton.setLabel("Bid");
         bidButton.setText("Bid");
-        mainPanel.add(bidButton, new com.intellij.uiDesigner.core.GridConstraints(3, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_NORTH, com.intellij.uiDesigner.core.GridConstraints.FILL_NONE, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_SHRINK | com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_CAN_GROW, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        gbc.weightx = 1.0;
+        gbc.anchor = GridBagConstraints.NORTH;
+        mainPanel.add(bidButton, gbc);
         playersPanel = new JPanel();
         playersPanel.setLayout(new GridBagLayout());
-        playersPanel.setFont(new Font(playersPanel.getFont().getName(), playersPanel.getFont().getStyle(), 20));
-        mainPanel.add(playersPanel, new com.intellij.uiDesigner.core.GridConstraints(4, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_SOUTH, com.intellij.uiDesigner.core.GridConstraints.FILL_HORIZONTAL, 1, 1, null, new Dimension(400, 150), null, 0, false));
+        Font playersPanelFont = this.$$$getFont$$$(null, -1, 20, playersPanel.getFont());
+        if (playersPanelFont != null) playersPanel.setFont(playersPanelFont);
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.anchor = GridBagConstraints.SOUTH;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        mainPanel.add(playersPanel, gbc);
         playersPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(-4521979)), null, TitledBorder.LEFT, TitledBorder.DEFAULT_POSITION));
-        final com.intellij.uiDesigner.core.Spacer spacer1 = new com.intellij.uiDesigner.core.Spacer();
-        mainPanel.add(spacer1, new com.intellij.uiDesigner.core.GridConstraints(2, 1, 1, 1, com.intellij.uiDesigner.core.GridConstraints.ANCHOR_CENTER, com.intellij.uiDesigner.core.GridConstraints.FILL_HORIZONTAL, com.intellij.uiDesigner.core.GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, new Dimension(-1, 15), null, 0, false));
+    }
+
+    /**
+     * @noinspection ALL
+     */
+    private Font $$$getFont$$$(String fontName, int style, int size, Font currentFont) {
+        if (currentFont == null) return null;
+        String resultName;
+        if (fontName == null) {
+            resultName = currentFont.getName();
+        } else {
+            Font testFont = new Font(fontName, Font.PLAIN, 10);
+            if (testFont.canDisplay('a') && testFont.canDisplay('1')) {
+                resultName = fontName;
+            } else {
+                resultName = currentFont.getName();
+            }
+        }
+        return new Font(resultName, style >= 0 ? style : currentFont.getStyle(), size >= 0 ? size : currentFont.getSize());
     }
 
     /**

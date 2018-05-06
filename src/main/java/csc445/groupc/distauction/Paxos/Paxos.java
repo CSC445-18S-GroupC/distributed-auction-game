@@ -5,6 +5,9 @@ import csc445.groupc.distauction.Paxos.Messages.Message;
 import csc445.groupc.distauction.Paxos.Messages.ProposalRequest;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Optional;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -45,8 +48,9 @@ public class Paxos<A extends Serializable> {
      * @param id The id of this Paxos node. [0, numNodes)
      * @param numNodes The number of nodes in the Paxos run.
      * @param applicationFunction The function to call each time a new value is committed.
+     * @param previousLog The previously recorded log entries for the Paxos run.
      */
-    public Paxos(final int id, final int numNodes, final Consumer<A> applicationFunction) {
+    public Paxos(final int id, final int numNodes, final Consumer<A> applicationFunction, final Optional<Collection<A>> previousLog) {
         this.id = id;
         this.numNodes = numNodes;
         this.applicationFunction = applicationFunction;
@@ -63,6 +67,12 @@ public class Paxos<A extends Serializable> {
         this.proposer = new Proposer<>(numNodes, id, receiveQueueProposer, sendingQueue, largestKnownRound);
         this.acceptor = new Acceptor<>(numNodes, id, receiveQueueAcceptor, sendingQueue, largestKnownRound);
         this.learner = new Learner<>(numNodes, id, receiveQueueLearner, sendingQueue, proposer, acceptor, largestKnownRound, applicationFunction);
+
+        if (previousLog.isPresent()) {
+            for (final A entry : previousLog.get()) {
+                this.learner.consensus(entry);
+            }
+        }
     }
 
     /**

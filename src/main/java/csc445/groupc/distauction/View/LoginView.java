@@ -1,20 +1,50 @@
 package csc445.groupc.distauction.View;
 
+import csc445.groupc.distauction.GameLogic.GameStep;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Optional;
+import java.util.Scanner;
 
 public class LoginView {
+    private static final String GAME_INFO_FILE_PREFIX = ".gameinfo_";
+
     public static JFrame frame;
     private JPanel loginPanel;
     private JButton hostButton;
     private JButton joinButton;
     private JTextField usernameField;
+    private JButton rejoinButton;
+
+    private final String gameInfoFilePath;
+    private final File gameIntoFile;
 
     public LoginView() {
+        String hostname = "";
+        try {
+            hostname = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+
+        gameInfoFilePath = GAME_INFO_FILE_PREFIX + hostname;
+        gameIntoFile = new File(gameInfoFilePath);
+
+        if (!gameIntoFile.exists()) {
+            rejoinButton.setVisible(false);
+        }
+
         hostButton.addActionListener(new BtnClicked());
         joinButton.addActionListener(new BtnClicked());
+        rejoinButton.addActionListener(new BtnClicked());
     }
 
     {
@@ -84,6 +114,13 @@ public class LoginView {
         gbc.gridy = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         loginPanel.add(joinButton, gbc);
+        rejoinButton = new JButton();
+        rejoinButton.setText("Rejoin Game");
+        rejoinButton.setToolTipText("Rejoins the previously played game");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        loginPanel.add(rejoinButton, gbc);
     }
 
     /**
@@ -103,20 +140,48 @@ public class LoginView {
             if (e.getSource().equals(hostButton)) {
                 System.out.println("Host Button");
 
+                if (gameIntoFile.exists()) {
+                    gameIntoFile.delete();
+                }
+
                 //switch panel to host
-                frame.setContentPane(new HostView(username).hostPanel);
+                frame.setContentPane(new HostView(username, gameInfoFilePath).hostPanel);
                 frame.pack();
             } else if (e.getSource().equals(joinButton)) {
                 System.out.println("Join Button");
 
+                if (gameIntoFile.exists()) {
+                    gameIntoFile.delete();
+                }
+
                 //switch panel to join
-                frame.setContentPane(new JoinView(username).joinPanel);
+                frame.setContentPane(new JoinView(username, gameInfoFilePath).joinPanel);
                 frame.pack();
+            } else if (e.getSource().equals(rejoinButton)) {
+                try {
+                    final Scanner sc = new Scanner(gameIntoFile);
+
+                    final String[] players = sc.nextLine().split(",");
+                    final int id = sc.nextInt();
+                    sc.nextLine();
+                    final String multicastGroup = sc.nextLine();
+                    sc.nextLine();
+
+                    final ArrayList<GameStep> previousSteps = new ArrayList<>();
+                    while (sc.hasNextLine()) {
+                        previousSteps.add(GameStep.fromString(sc.nextLine()));
+                    }
+
+                    frame.setContentPane(new GameView(players,
+                            id, multicastGroup, gameInfoFilePath, Optional.of(previousSteps)).mainPanel);
+                    frame.pack();
+                } catch (FileNotFoundException e1) {
+                    e1.printStackTrace();
+                }
             }
             System.out.println("Username: " + username);
         }
     }
-
 
     public static void main() {
         frame = new JFrame("BidGame");

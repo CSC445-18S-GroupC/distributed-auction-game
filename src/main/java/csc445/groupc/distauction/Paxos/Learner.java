@@ -186,7 +186,7 @@ public class Learner<A extends Serializable> {
         return messageAcceptances.get(proposalId) == majority;
     }
 
-    private void consensus(final A value) {
+    public void consensus(final A value) {
         if (DEBUG) System.out.println(this + " reached majority on " + value);
 
         final int newRound = paxosRound + 1;

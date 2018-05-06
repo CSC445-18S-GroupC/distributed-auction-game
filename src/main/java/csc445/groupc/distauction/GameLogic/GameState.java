@@ -85,7 +85,7 @@ public class GameState {
      * The function that is called whenever the game state is updated. For example, this can be used to update a GUI
      * display for the game whenever the state changes.
      */
-    private final Consumer<GameState> updateFunction;
+    private final Consumer<GameStep> updateFunction;
 
     /**
      * Creates a new game state object.
@@ -94,7 +94,7 @@ public class GameState {
      * @param players The usernames of the players.
      * @param updateFunction A function to call whenever the game state is changed.
      */
-    public GameState(final LocalDateTime currentTime, final String[] players, final Consumer<GameState> updateFunction) {
+    public GameState(final LocalDateTime currentTime, final String[] players, final Consumer<GameStep> updateFunction) {
         this.round = 1;
         this.playerScores = new HashMap<>();
         this.updateFunction = updateFunction;
@@ -132,8 +132,8 @@ public class GameState {
         return topBid.map((b) -> new Bid(b.getBidder(), amount));
     }
 
-    private void onUpdate() {
-        updateFunction.accept(this);
+    private void onUpdate(final GameStep gameStep) {
+        updateFunction.accept(gameStep);
     }
 
     /**
@@ -163,7 +163,7 @@ public class GameState {
             }
         }
 
-        onUpdate();
+        onUpdate(gameStep);
     }
 
     private void applyBid(final Bid bid) {
