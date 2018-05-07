@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +36,7 @@ public class PaxosTest {
                 if (a == v) {
                     countDownLatch.countDown();
                 }
-            });
+            }, Optional.empty());
 
             countDownLatches.add(countDownLatch);
             paxosList.add(paxos);
@@ -81,7 +82,7 @@ public class PaxosTest {
                 if (a == v) {
                     countDownLatch.countDown();
                 }
-            });
+            }, Optional.empty());
 
             countDownLatches.add(countDownLatch);
             paxosList.add(paxos);
@@ -130,7 +131,7 @@ public class PaxosTest {
                 if (a == v) {
                     countDownLatch.countDown();
                 }
-            });
+            }, Optional.empty());
 
             countDownLatches.add(countDownLatch);
             paxosList.add(paxos);
