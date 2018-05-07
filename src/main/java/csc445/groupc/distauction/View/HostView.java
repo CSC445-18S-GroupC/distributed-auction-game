@@ -9,11 +9,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.net.Inet4Address;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
@@ -23,7 +21,7 @@ public class HostView {
     public JPanel hostPanel;
     private JLabel numOfConnected;
     private JButton playBtn;
-    private String ip;
+    private Optional<String> ip;
     private static int port = 9000;
     private ArrayList<String> usernames;
     private int id;
@@ -39,8 +37,8 @@ public class HostView {
         this.gameInfoFile = gameInfoFile;
 
         try {
-            ip = Inet4Address.getLocalHost().getHostAddress();
-            ipAddress.setText(ip);
+            ip = getIpAddress();
+            ipAddress.setText(ip.orElse("Unable to get IP address"));
             portNumber.setText(Integer.toString(port));
 
             server = new Thread(new Runnable() {
@@ -56,9 +54,31 @@ public class HostView {
             addUser(username);
             id = usernames.indexOf(username);
 
-        } catch (UnknownHostException e) {
+        } catch (SocketException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Attempts to get the IPv4 IP address of the current machine.
+     *
+     * @return The IP address of the current machine.
+     * @throws SocketException If it fails to get the machine's network interfaces.
+     */
+    private Optional<String> getIpAddress() throws SocketException {
+        final Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+        while (interfaces.hasMoreElements()) {
+            final NetworkInterface networkInterface = interfaces.nextElement();
+            final Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
+            while (addresses.hasMoreElements()) {
+                final InetAddress addr = addresses.nextElement();
+
+                if (addr instanceof Inet4Address && !addr.isLoopbackAddress()) {
+                    return Optional.of(addr.getHostAddress());
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     {
