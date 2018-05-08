@@ -14,6 +14,10 @@ import java.util.function.Consumer;
 
 /**
  * Created by chris on 4/28/18.
+ *
+ * @see Acceptor
+ * @see Proposer
+ * @see Paxos
  */
 public class Learner<A extends Serializable> {
     private static final boolean DEBUG = false;

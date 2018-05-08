@@ -13,7 +13,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Created by chris on 4/23/18.
+ * A Proposer is a Paxos role that makes symbol proposals to Acceptors so that new symbols can begin the process of
+ * being added to the log.
+ *
+ * @see Acceptor
+ * @see Learner
+ * @see Paxos
  */
 public class Proposer<A extends Serializable> {
     private static final boolean DEBUG = false;
@@ -70,6 +75,15 @@ public class Proposer<A extends Serializable> {
     private final AtomicInteger largestKnownRound;
     private final ThreadLocalRandom rand;
 
+    /**
+     * Creates a Proposer object using the given information.
+     *
+     * @param numNodes The number of nodes in the Paxos run.
+     * @param id The id of the current node.
+     * @param messageQueue The message receiving queue for the Proposer.
+     * @param sendQueue The message sending queue for the Paxos node.
+     * @param largestKnownRound The largest known Paxos round that has occurred.
+     */
     public Proposer(final int numNodes, final int id, final LinkedBlockingQueue<Message> messageQueue,
                     final LinkedBlockingQueue<Message> sendQueue, final AtomicInteger largestKnownRound) {
         this.numNodes = numNodes;
@@ -139,7 +153,6 @@ public class Proposer<A extends Serializable> {
                     if (!promiseMajorities.getOrDefault(proposalId, false)) {
                         incrementCount(promiseCounts, proposalId);
                         if (promise.hasAcceptedValue()) {
-                            // TODO: Double check that this works
                             final boolean receivedProposalIdBetter = promise.getAcceptedID() > proposalId;
                             if (receivedProposalIdBetter) {
                                 newestProposalValue = Optional.of(promise.getAcceptedValue());
@@ -152,7 +165,7 @@ public class Proposer<A extends Serializable> {
                             sendAcceptRequestToAllAcceptors(proposalId, newestProposalValue.get());
                         }
                     }
-                } else if (message instanceof Accept) { // TODO: Is this really needed if Learner will reset rounds?
+                } else if (message instanceof Accept) {
                     final Accept<A> accept = (Accept<A>) message;
                     final int proposalId = accept.getProposalID();
 
@@ -173,6 +186,11 @@ public class Proposer<A extends Serializable> {
         }
     }
 
+    /**
+     * Begins the specified new Paxos round.
+     *
+     * @param newRound The new round of Paxos to begin.
+     */
     public void newRound(final int newRound) {
         processMessageLock.lock();
         try {

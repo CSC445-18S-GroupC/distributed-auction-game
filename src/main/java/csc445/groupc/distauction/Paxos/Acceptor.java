@@ -11,6 +11,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by chris on 4/28/18.
+ *
+ * @see Learner
+ * @see Proposer
+ * @see Paxos
  */
 public class Acceptor<A extends Serializable> {
     private static final boolean DEBUG = false;

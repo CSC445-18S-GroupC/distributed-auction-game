@@ -23,6 +23,10 @@ import java.util.function.Consumer;
  *
  * paxos.proposeValue(nextStep);
  * </pre>
+ *
+ * @see Acceptor
+ * @see Learner
+ * @see Proposer
  */
 public class Paxos<A extends Serializable> {
     private final int id;
