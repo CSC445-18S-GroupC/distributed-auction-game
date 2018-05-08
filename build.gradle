@@ -17,6 +17,10 @@ jar {
     }
 }
 
+javadoc {
+    options.tags = [ "noinspection" ]
+}
+
 repositories {
     mavenCentral()
 }

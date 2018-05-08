@@ -31,7 +31,7 @@ public class Prepare extends PaxosMessage {
     }
 
     @Override
-    public byte[] toByteArray() throws IOException {
+    public byte[] toByteArray() {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES * 4 + Byte.BYTES);
 
         byteBuffer.putInt(PREPARE_OP);
@@ -49,7 +49,7 @@ public class Prepare extends PaxosMessage {
         return byteBuffer.array();
     }
 
-    public static Prepare fromByteArray(final byte[] bytes) throws IOException {
+    public static Prepare fromByteArray(final byte[] bytes) {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(bytes.length);
 
         byteBuffer.put(bytes);

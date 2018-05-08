@@ -74,7 +74,7 @@ public abstract class PaxosMessage extends Message {
         }
     }
 
-    public abstract byte[] toByteArray() throws IOException, ClassNotFoundException;
+    public abstract byte[] toByteArray() throws IOException;
 
     public static <B extends Serializable> PaxosMessage fromByteArray(byte[] bytes) throws IOException, ClassNotFoundException {
         final ByteBuffer buffer = ByteBuffer.allocate(bytes.length);

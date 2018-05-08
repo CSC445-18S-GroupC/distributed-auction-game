@@ -25,7 +25,7 @@ public class UpdateRequest extends PaxosMessage {
     }
 
     @Override
-    public byte[] toByteArray() throws IOException {
+    public byte[] toByteArray() {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES * 3 + Byte.BYTES);
 
         byteBuffer.putInt(UPDATE_REQUEST_OP);
@@ -42,7 +42,7 @@ public class UpdateRequest extends PaxosMessage {
         return byteBuffer.array();
     }
 
-    public static UpdateRequest fromByteArray(final byte[] bytes) throws IOException {
+    public static UpdateRequest fromByteArray(final byte[] bytes) {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(bytes.length);
 
         byteBuffer.put(bytes);

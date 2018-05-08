@@ -12,11 +12,12 @@ import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * Created by chris on 4/22/18.
+ * MessageReceiving is used for receiving messages as they are received through multicast and placing them into a
+ * concurrent queue.
  */
 public abstract class MessageReceiving {
     /**
-     * The maximum size of UDP message that the run method will receive.
+     * The maximum size of multicast message that the run method will receive.
      */
     private static final int MAX_MESSAGE_SIZE = 512;
 
@@ -30,6 +31,7 @@ public abstract class MessageReceiving {
      * @throws IOException If the port is already being used.
      * @throws InterruptedException If the program is interrupted while a
      * message is waiting to be placed on the message queue.
+     * @throws ClassNotFoundException If an invalid message is sent.
      */
     public static void run(final String group, final int port, final LinkedBlockingQueue<Message> queue) throws IOException, InterruptedException, ClassNotFoundException {
         final InetAddress groupAddress = InetAddress.getByName(group);

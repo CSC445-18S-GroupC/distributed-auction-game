@@ -10,7 +10,7 @@ import java.net.MulticastSocket;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * Created by chris on 4/22/18.
+ * MessageSending is used for sending messages through multicast as they are placed into a concurrent queue.
  */
 public abstract class MessageSending {
     /**
@@ -24,7 +24,7 @@ public abstract class MessageSending {
      * @throws InterruptedException If the program is interrupted while it is
      * waiting for a message.
      */
-    public static void run(final String sendGroup, final int sendPort, final int receivePort, final LinkedBlockingQueue<Message> queue) throws IOException, InterruptedException, ClassNotFoundException {
+    public static void run(final String sendGroup, final int sendPort, final int receivePort, final LinkedBlockingQueue<Message> queue) throws IOException, InterruptedException {
         final InetAddress sendGroupAddress = InetAddress.getByName(sendGroup);
 
         final MulticastSocket socket = new MulticastSocket(sendPort);
@@ -53,7 +53,7 @@ public abstract class MessageSending {
      * @param message The message to send.
      * @throws IOException If there is an issue while sending the message.
      */
-    private static void sendMessage(final MulticastSocket socket, final InetAddress address, final int receivePort, final PaxosMessage message) throws IOException, ClassNotFoundException {
+    private static void sendMessage(final MulticastSocket socket, final InetAddress address, final int receivePort, final PaxosMessage message) throws IOException {
         final byte[] messageBuffer = message.toByteArray();
 
         final DatagramPacket packet = new DatagramPacket(messageBuffer, messageBuffer.length);
