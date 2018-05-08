@@ -146,6 +146,7 @@ public class GameView {
     }
 
     public void updateUsers(HashMap<String, Integer> playerScores) {
+        playersPanel.removeAll();
         GridBagConstraints c = new GridBagConstraints();
         c.weightx = 1.0;
         c.weighty = 1.0;
@@ -183,6 +184,25 @@ public class GameView {
 
     private static void onThread(final Runnable runnable) {
         new Thread(runnable).start();
+    }
+
+    /**
+     * @noinspection ALL
+     */
+    private Font $$$getFont$$$(String fontName, int style, int size, Font currentFont) {
+        if (currentFont == null) return null;
+        String resultName;
+        if (fontName == null) {
+            resultName = currentFont.getName();
+        } else {
+            Font testFont = new Font(fontName, Font.PLAIN, 10);
+            if (testFont.canDisplay('a') && testFont.canDisplay('1')) {
+                resultName = fontName;
+            } else {
+                resultName = currentFont.getName();
+            }
+        }
+        return new Font(resultName, style >= 0 ? style : currentFont.getStyle(), size >= 0 ? size : currentFont.getSize());
     }
 
     {
@@ -252,25 +272,6 @@ public class GameView {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(playersPanel, gbc);
         playersPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(-4521979)), null, TitledBorder.LEFT, TitledBorder.DEFAULT_POSITION));
-    }
-
-    /**
-     * @noinspection ALL
-     */
-    private Font $$$getFont$$$(String fontName, int style, int size, Font currentFont) {
-        if (currentFont == null) return null;
-        String resultName;
-        if (fontName == null) {
-            resultName = currentFont.getName();
-        } else {
-            Font testFont = new Font(fontName, Font.PLAIN, 10);
-            if (testFont.canDisplay('a') && testFont.canDisplay('1')) {
-                resultName = fontName;
-            } else {
-                resultName = currentFont.getName();
-            }
-        }
-        return new Font(resultName, style >= 0 ? style : currentFont.getStyle(), size >= 0 ? size : currentFont.getSize());
     }
 
     /**
